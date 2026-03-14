@@ -18,7 +18,7 @@ def _haversine_km(lat1, lng1, lat2, lng2):
 
 def build_city_graph(zones, infrastructure, roads):
     """Build adjacency-list graph from zones + infrastructure.
-    
+
     Returns:
         nodes: dict[str, GraphNode]
         edges: list[GraphEdge]
@@ -97,7 +97,7 @@ def build_city_graph(zones, infrastructure, roads):
 
 def update_edge_weights(nodes, edges, adj, zones, roads):
     """Recalculate edge weights based on current hazard, road blocks, and congestion.
-    
+
     Modifies edges in-place and rebuilds adj weights.
     """
     # Build zone hazard lookup
@@ -148,7 +148,7 @@ def update_edge_weights(nodes, edges, adj, zones, roads):
 
 def dijkstra(adj, source_id, target_id=None):
     """Dijkstra's shortest path from source to target (or all nodes if target=None).
-    
+
     Returns:
         dist: dict[str, float]  — shortest distance from source to each node
         prev: dict[str, str|None]  — previous node for path reconstruction
@@ -176,14 +176,14 @@ def dijkstra(adj, source_id, target_id=None):
 
 def get_shortest_path(adj, source_id, target_id):
     """Get shortest path and total cost between two nodes.
-    
+
     Returns: (path: list[str], cost: float)
     """
     dist, prev = dijkstra(adj, source_id, target_id)
     cost = dist.get(target_id, float('inf'))
     if cost == float('inf'):
         return [], cost
-    
+
     path = []
     node = target_id
     while node:
@@ -195,14 +195,14 @@ def get_shortest_path(adj, source_id, target_id):
 
 def find_nearest(adj, nodes, source_id, target_type):
     """Find nearest node of a given type from source.
-    
+
     Args:
         target_type: e.g., "hospital", "shelter", "power_station"
-    
+
     Returns: (node_id, cost) or (None, inf)
     """
     dist, _ = dijkstra(adj, source_id)
-    
+
     best_id = None
     best_cost = float('inf')
     for node_id, node in nodes.items():
@@ -210,19 +210,19 @@ def find_nearest(adj, nodes, source_id, target_type):
             if dist.get(node_id, float('inf')) < best_cost:
                 best_cost = dist[node_id]
                 best_id = node_id
-    
+
     return best_id, best_cost
 
 
 def compute_accessibility(adj, nodes, zone_node_id):
     """Compute accessibility score for a zone: avg travel time to nearest hospital + shelter.
-    
+
     Lower score = better access. Returns minutes.
     """
     _, hosp_cost = find_nearest(adj, nodes, zone_node_id, "hospital")
     _, shelter_cost = find_nearest(adj, nodes, zone_node_id, "shelter")
-    
+
     hosp_cost = min(hosp_cost, 60)  # cap at 60 min
     shelter_cost = min(shelter_cost, 60)
-    
+
     return round((hosp_cost + shelter_cost) / 2, 1)
