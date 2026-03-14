@@ -46,18 +46,18 @@ def _road_inaccessibility(zone, roads):
 
 def _medical_load_index(zone, infrastructure):
     """Hospital load pressure near the zone (0-100)."""
-    hospitals = []
+    loads = []
     for infra in infrastructure:
-        if infra.type.value != "hospital":
+        if infra.type != "hospital":
             continue
         dist = _haversine_km(infra.lat, infra.lng, zone.center[0], zone.center[1])
         if dist < 3.0:
             if infra.capacity > 0:
                 load_pct = (infra.current_load / infra.capacity) * 100
-                hospitals.append(min(100, load_pct))
-    if not hospitals:
+                loads.append(min(100, load_pct))
+    if not loads:
         return 50  # no nearby hospitals = moderate concern
-    return sum(hospitals) / len(hospitals)
+    return sum(loads) / len(loads)
 
 
 def compute_zone_risk(zone, infrastructure, roads):

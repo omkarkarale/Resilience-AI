@@ -70,7 +70,7 @@ def optimize_generators(zones, infrastructure, graph_nodes, adj, available=20):
     remaining = available
 
     # Priority 1: Failed power stations in high-risk zones
-    power_stations = [i for i in infrastructure if i.type.value == "power_station"]
+    power_stations = [i for i in infrastructure if i.type == "power_station"]
     scored_stations = []
     for ps in power_stations:
         if ps.damage < 30:
@@ -104,7 +104,7 @@ def optimize_generators(zones, infrastructure, graph_nodes, adj, available=20):
         remaining -= 1
 
     # Priority 2: Overloaded hospitals
-    hospitals = [i for i in infrastructure if i.type.value == "hospital" and i.current_load > i.capacity * 0.8]
+    hospitals = [i for i in infrastructure if i.type == "hospital" and i.current_load > i.capacity * 0.8]
     hospitals.sort(key=lambda h: -(h.current_load / max(h.capacity, 1)))
 
     for hosp in hospitals:

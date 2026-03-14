@@ -291,9 +291,9 @@ class SimulationEngine:
         if blocked_roads:
             events.append(CascadingEvent(
                 step=step,
-                source=self.disaster.type.value.title(),
+                source=str(self.disaster.type).title(),
                 target="Road Network",
-                description=f"{len(blocked_roads)} road(s) blocked by {self.disaster.type.value}",
+                description=f"{len(blocked_roads)} road(s) blocked by {self.disaster.type}",
                 icon="🌊" if self.disaster.type == DisasterType.FLOOD else "🌍"
             ))
             step += 1
@@ -375,7 +375,7 @@ class SimulationEngine:
         # Snapshot 'before'
         before_state = self.get_state()
         before_risk = before_state.overall_risk
-        before_infra = {i.id: i.status.value for i in before_state.infrastructure}
+        before_infra = {i.id: str(i.status) for i in before_state.infrastructure}
         before_cap = sum(i.capacity for i in self.infrastructure if i.type == InfrastructureType.HOSPITAL)
 
         # Apply intervention directly to active objects
@@ -418,7 +418,7 @@ class SimulationEngine:
         # Compute after metrics
         after_state = self.get_state()
         after_risk = after_state.overall_risk
-        after_infra = {i.id: i.status.value for i in after_state.infrastructure}
+        after_infra = {i.id: str(i.status) for i in after_state.infrastructure}
         after_cap = sum(i.capacity for i in self.infrastructure if i.type == InfrastructureType.HOSPITAL)
 
         return {

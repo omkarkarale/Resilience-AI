@@ -22,14 +22,13 @@ export default function TimelineSlider({ timeline = [], viewingTick, onViewTick,
                     type="range"
                     min={0} max={maxTick}
                     value={viewingTick !== null ? viewingTick : maxTick}
-                    onChange={e => { if (!running) onViewTick(Number(e.target.value)); }}
-                    disabled={running}
-                    style={{ flex: 1, opacity: running ? 0.5 : 1, height: 4 }}
+                    onChange={e => onViewTick(Number(e.target.value))}
+                    style={{ flex: 1, height: 4, cursor: 'pointer' }}
                 />
                 <span style={{ fontSize: 10, color: '#64748b', flexShrink: 0 }}>{maxTick + 1}</span>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {!isLive && !running && (
+                    {!isLive && (
                         <button
                             onClick={() => onViewTick(null)}
                             style={{

@@ -23,11 +23,13 @@ simulation_task = None
 
 async def broadcast(data: dict):
     """Broadcast simulation state to all connected WebSocket clients."""
+    print(f"[WS] Broadcasting tick {data.get('tick')} to {len(active_connections)} clients")
     dead = []
     for ws in active_connections:
         try:
             await ws.send_json(data)
-        except Exception:
+        except Exception as e:
+            print(f"[WS] Broadcast error for client: {e}")
             dead.append(ws)
     for ws in dead:
         active_connections.remove(ws)
@@ -35,12 +37,15 @@ async def broadcast(data: dict):
 
 async def simulation_loop():
     """Run simulation ticks every 5 seconds and broadcast state."""
+    print(f"[LOOP] Simulation loop started. Running: {engine.running}")
     while engine.running:
         try:
             state = engine.step()
-            await broadcast(state.dict())
+            # Use state.json() and then reload to ensure Enums/types are JSON-serializable
+            data = json.loads(state.json()) if hasattr(state, "json") else state.dict()
+            await broadcast(data)
         except Exception as e:
-            print(f"Simulation tick error: {e}")
+            print(f"[LOOP] Simulation tick error: {e}")
             import traceback
             traceback.print_exc()
         await asyncio.sleep(5)

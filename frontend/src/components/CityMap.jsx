@@ -99,7 +99,11 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
 
     if (!state) return null;
 
-    const tileUrl = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+    // CartoDB Voyager (light) has clear blue water & white/beige land
+    // CartoDB DarkMatter (dark) has dark navy water & very dark gray land — excellent contrast
+    const tileUrl = theme === 'light'
+        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
 
     const popupBg = theme === 'light' ? '#fff' : '#141b2d';
     const popupColor = theme === 'light' ? '#0f172a' : '#e2e8f0';
@@ -108,7 +112,13 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
             <MapContainer center={CENTER} zoom={ZOOM} style={{ height: '100%', width: '100%', zIndex: 0 }} zoomControl={true}>
                 <MapUpdater center={CENTER} zoom={ZOOM} onZoomChange={setCurrentZoom} />
-                <TileLayer attribution='&copy; <a href="https://carto.com/">CARTO</a>' url={tileUrl} />
+                <TileLayer
+                    key={theme}
+                    attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+                    url={tileUrl}
+                    subdomains='abcd'
+                    maxZoom={20}
+                />
 
                 <LayersControl position="topright">
                     <Overlay checked name="Risk Zones">
@@ -122,9 +132,9 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                                         pathOptions={{
                                             color: getRiskColor(zone.risk_score),
                                             fillColor: getRiskColor(zone.risk_score),
-                                            fillOpacity: isHighRisk ? (theme === 'light' ? 0.2 : 0.1) : (theme === 'light' ? 0.08 : 0.03),
-                                            weight: isHighRisk ? (theme === 'light' ? 2.5 : 1.5) : (theme === 'light' ? 1.5 : 0.5),
-                                            opacity: isHighRisk ? (theme === 'light' ? 0.9 : 0.6) : (theme === 'light' ? 0.6 : 0.25),
+                                            fillOpacity: isHighRisk ? (theme === 'light' ? 0.25 : 0.2) : (theme === 'light' ? 0.12 : 0.08),
+                                            weight: isHighRisk ? (theme === 'light' ? 2.5 : 2) : (theme === 'light' ? 1.5 : 1),
+                                            opacity: isHighRisk ? (theme === 'light' ? 0.9 : 0.8) : (theme === 'light' ? 0.6 : 0.45),
                                             dashArray: isHighRisk ? '4, 4' : null,
                                         }}
                                         eventHandlers={{ click: () => onZoneClick?.(zone) }}
@@ -151,8 +161,8 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                                     pathOptions={{
                                         color: getRiskColor(zone.risk_score),
                                         fillColor: getRiskColor(zone.risk_score),
-                                        fillOpacity: theme === 'light' ? zone.risk_score / 200 : zone.risk_score / 400,
-                                        weight: zone.risk_score > 70 ? (theme === 'light' ? 2 : 1) : 0,
+                                        fillOpacity: theme === 'light' ? zone.risk_score / 180 : zone.risk_score / 250,
+                                        weight: zone.risk_score > 70 ? (theme === 'light' ? 2 : 1.5) : 0.5,
                                     }}
                                 />
                             ))}
@@ -169,9 +179,9 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                                         key={road.id}
                                         positions={road.points}
                                         pathOptions={{
-                                            color: road.blocked ? COLORS.critical : road.status === 'degraded' ? COLORS.warning : (theme === 'light' ? 'rgba(51,65,85,0.5)' : 'rgba(100,116,139,0.25)'),
-                                            weight: road.blocked ? (theme === 'light' ? 3.5 : 2.5) : (theme === 'light' ? 2 : 1),
-                                            opacity: road.blocked ? (theme === 'light' ? 1 : 0.8) : (theme === 'light' ? 0.6 : 0.3),
+                                            color: road.blocked ? COLORS.critical : road.status === 'degraded' ? COLORS.warning : (theme === 'light' ? 'rgba(51,65,85,0.55)' : 'rgba(148,163,184,0.5)'),
+                                            weight: road.blocked ? (theme === 'light' ? 3.5 : 3) : (theme === 'light' ? 2 : 1.5),
+                                            opacity: road.blocked ? (theme === 'light' ? 1 : 0.9) : (theme === 'light' ? 0.7 : 0.5),
                                             dashArray: road.blocked ? '5, 5' : null,
                                         }}
                                     >
@@ -262,24 +272,25 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
             <div style={{
                 position: 'absolute', bottom: 8, right: 8, zIndex: 1000,
                 padding: '4px 10px',
-                background: 'rgba(11, 15, 25, 0.85)',
+                background: theme === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(11, 15, 25, 0.92)',
                 borderRadius: 6,
                 fontSize: 9,
                 display: 'flex', alignItems: 'center', gap: 10,
                 pointerEvents: 'none',
-                border: '1px solid rgba(255,255,255,0.06)',
+                border: theme === 'light' ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
+                backdropFilter: 'blur(4px)',
             }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.critical, display: 'inline-block' }} />
-                    <span style={{ color: '#94a3b8' }}>Critical</span>
+                    <span style={{ color: theme === 'light' ? '#475569' : '#94a3b8' }}>Critical</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.warning, display: 'inline-block' }} />
-                    <span style={{ color: '#94a3b8' }}>Warning</span>
+                    <span style={{ color: theme === 'light' ? '#475569' : '#94a3b8' }}>Warning</span>
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.healthy, display: 'inline-block' }} />
-                    <span style={{ color: '#94a3b8' }}>OK</span>
+                    <span style={{ color: theme === 'light' ? '#475569' : '#94a3b8' }}>OK</span>
                 </span>
             </div>
         </div>

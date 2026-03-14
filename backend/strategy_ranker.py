@@ -12,8 +12,8 @@ def define_strategies(zones, infrastructure, roads, disaster):
     """
     high_risk_zones = [z for z in zones if z.risk_score > 50]
     blocked_roads = [r for r in roads if r.blocked]
-    failed_power = [i for i in infrastructure if i.type.value == "power_station" and i.status.value == "failed"]
-    overloaded_hospitals = [i for i in infrastructure if i.type.value == "hospital" and i.current_load > i.capacity]
+    failed_power = [i for i in infrastructure if i.type == "power_station" and i.status == "failed"]
+    overloaded_hospitals = [i for i in infrastructure if i.type == "hospital" and i.current_load > i.capacity]
 
     strategies = []
 
@@ -86,7 +86,7 @@ def evaluate_strategy(strategy, zones, infrastructure, roads, disaster):
     overall_risk = sum(z.risk_score for z in zones) / max(len(zones), 1)
     high_risk_count = sum(1 for z in zones if z.risk_score > 50)
     blocked_count = sum(1 for r in roads if r.blocked)
-    failed_infra = sum(1 for i in infrastructure if i.status.value == "failed" or (hasattr(i.status, 'value') and i.status == "failed"))
+    failed_infra = sum(1 for i in infrastructure if i.status == "failed")
     total_pop = sum(z.population for z in zones)
     exposed_pop = sum(z.population * (z.risk_score / 100) * 0.6 for z in zones)
 

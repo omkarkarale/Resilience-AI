@@ -44,17 +44,17 @@ def build_city_graph(zones, infrastructure, roads):
     # Create infrastructure nodes (only major types)
     major_types = {"hospital", "power_station", "shelter"}
     for infra in infrastructure:
-        if infra.type.value not in major_types:
+        if str(infra.type) not in major_types:
             continue
         node = GraphNode(
             id=f"infra_{infra.id}",
             label=infra.name,
-            node_type=infra.type.value,
+            node_type=str(infra.type),
             lat=infra.lat,
             lng=infra.lng,
             capacity=infra.capacity,
             current_load=infra.current_load,
-            status=infra.status.value if hasattr(infra.status, 'value') else str(infra.status),
+            status=str(infra.status),
         )
         # Assign zone
         best_zone = None

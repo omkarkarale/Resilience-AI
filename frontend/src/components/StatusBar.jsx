@@ -107,20 +107,20 @@ const StatusBar = React.memo(function StatusBar({ state, connected }) {
                         </div>
                     </>
                 )}
-                {city_summary?.total_exposed > 0 && (
-                    <>
-                        <div style={{ width: 1, height: 24, background: 'var(--border)' }} />
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Exposed</div>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>{(city_summary.total_exposed / 1000).toFixed(1)}k</div>
-                        </div>
-                        <div style={{ width: 1, height: 24, background: 'var(--border)' }} />
-                        <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Evac.</div>
-                            <div style={{ fontSize: 13, fontWeight: 600, color: '#f59e0b' }}>{(city_summary.total_evacuating / 1000).toFixed(1)}k</div>
-                        </div>
-                    </>
-                )}
+                <div style={{ width: 1, height: 24, background: 'var(--border)' }} />
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Exposed</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>
+                        {city_summary?.total_exposed ? (city_summary.total_exposed / 1000).toFixed(1) : '0.0'}k
+                    </div>
+                </div>
+                <div style={{ width: 1, height: 24, background: 'var(--border)' }} />
+                <div style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Evac.</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#f59e0b' }}>
+                        {city_summary?.total_evacuating ? (city_summary.total_evacuating / 1000).toFixed(1) : '0.0'}k
+                    </div>
+                </div>
             </div>
 
             {/* Right: Infrastructure chips */}

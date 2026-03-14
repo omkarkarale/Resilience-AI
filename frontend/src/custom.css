@@ -238,12 +238,7 @@ body {
 [data-theme="light"] .leaflet-container {
     background: #f0f4f8 !important;
 }
-[data-theme="light"] .leaflet-tile-pane {
-    filter: brightness(105%) contrast(120%) saturate(120%);
-}
-[data-theme="dark"] .leaflet-tile-pane {
-    filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(150%);
-}
+/* No CSS filters needed — using proper themed tile providers (CartoDB Voyager / DarkMatter) */
 .leaflet-control-zoom a {
     background: var(--bg-surface-raised) !important;
     color: var(--text-secondary) !important;

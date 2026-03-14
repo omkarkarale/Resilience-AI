@@ -120,7 +120,14 @@ export function useSimulation() {
 
             // Optimistic update: mark simulation as running immediately
             setSimulationRunning(true);
-            setTimeline([]);
+            
+            // Initialize timeline with current tick 0 state so slider shows up immediately
+            setState(prev => {
+                const newState = prev ? { ...prev, running: true, disaster: result.disaster } : prev;
+                if (newState) setTimeline([newState]);
+                return newState;
+            });
+            
             setViewingTick(null);
             setLoading(false);
             return result;

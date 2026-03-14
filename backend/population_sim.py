@@ -22,7 +22,7 @@ def compute_population_metrics(zones, infrastructure, graph_nodes, adj, tick):
     zone_shelter_cap = {}
     zone_shelter_load = {}
     for infra in infrastructure:
-        if infra.type.value != "shelter":
+        if infra.type != "shelter":
             continue
         # Find which zone this shelter belongs to
         best_zone = None
