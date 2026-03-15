@@ -3,19 +3,19 @@
 import random
 from datetime import datetime
 
-from models import (
+from models import (  # pyre-ignore[21]
     Zone, Infrastructure, Road, InfrastructureType, InfraStatus,
     DisasterEvent, DisasterType, SimulationState, CascadingEvent,
 )
-from agents import (
+from agents import (  # pyre-ignore[21]
     WeatherAgent, TrafficAgent, MedicalAgent,
     PowerAgent, LogisticsAgent, CommandAgent,
 )
-from city_graph import build_city_graph, update_edge_weights
-from risk_engine import compute_all_risks
-from population_sim import compute_population_metrics, get_city_summary
-from resource_optimizer import get_all_allocations
-from strategy_ranker import rank_strategies
+from city_graph import build_city_graph, update_edge_weights  # pyre-ignore[21]
+from risk_engine import compute_all_risks  # pyre-ignore[21]
+from population_sim import compute_population_metrics, get_city_summary  # pyre-ignore[21]
+from resource_optimizer import get_all_allocations  # pyre-ignore[21]
+from strategy_ranker import rank_strategies  # pyre-ignore[21]
 
 def build_mumbai():
     """Build a realistic Mumbai layout centered around lat 19.0760, lng 72.8777."""
@@ -23,21 +23,25 @@ def build_mumbai():
     rng_state = random.getstate()
     random.seed(42)
 
+    # Zone bounding boxes are meticulously crafted to fit Mumbai's actual landmass.
+    # Mumbai is a narrow peninsula; imprecise rectangles will spill into the Arabian Sea
+    # or the eastern harbour.
     district_data = [
-        ("z1", "South Mumbai", 18.96, 72.82, [18.92, 19.00], [72.81, 72.84], 80000, True),
-        ("z2", "Colaba", 18.91, 72.81, [18.89, 18.93], [72.80, 72.82], 40000, True),
-        ("z3", "Dadar", 19.02, 72.84, [19.00, 19.04], [72.83, 72.86], 65000, False),
-        ("z4", "Bandra", 19.06, 72.83, [19.04, 19.08], [72.82, 72.85], 70000, True),
-        ("z5", "Andheri", 19.11, 72.84, [19.09, 19.14], [72.82, 72.87], 90000, False),
-        ("z6", "Juhu", 19.09, 72.82, [19.08, 19.11], [72.81, 72.83], 35000, True),
-        ("z7", "Powai", 19.12, 72.90, [19.11, 19.14], [72.89, 72.92], 45000, False),
-        ("z8", "Kurla", 19.07, 72.88, [19.05, 19.09], [72.87, 72.90], 85000, True),
-        ("z9", "Dharavi", 19.04, 72.85, [19.03, 19.06], [72.84, 72.87], 100000, True),
-        ("z10", "Sion", 19.03, 72.86, [19.02, 19.05], [72.85, 72.88], 55000, False),
-        ("z11", "Chembur", 19.05, 72.90, [19.03, 19.07], [72.88, 72.92], 60000, False),
-        ("z12", "Borivali", 19.23, 72.85, [19.20, 19.25], [72.84, 72.87], 75000, False),
-        ("z13", "Thane", 19.21, 72.97, [19.18, 19.24], [72.95, 73.00], 80000, False),
-        ("z14", "Navi Mumbai", 19.03, 73.02, [19.00, 19.06], [73.00, 73.05], 65000, True),
+        #  id,   name,           cLat,   cLng,  latBounds,       lngBounds,       pop,   flood
+        ("z1",  "South Mumbai",  18.945, 72.830, [18.930, 18.965], [72.820, 72.840], 80000,  True),
+        ("z2",  "Colaba",        18.915, 72.820, [18.895, 18.930], [72.813, 72.828], 40000,  True),
+        ("z3",  "Dadar",         19.020, 72.845, [19.010, 19.035], [72.835, 72.855], 65000,  False),
+        ("z4",  "Bandra",        19.050, 72.835, [19.040, 19.065], [72.830, 72.845], 70000,  True),
+        ("z5",  "Andheri",       19.110, 72.845, [19.100, 19.125], [72.835, 72.860], 90000,  False),
+        ("z6",  "Juhu",          19.100, 72.830, [19.090, 19.110], [72.825, 72.835], 35000,  True),
+        ("z7",  "Powai",         19.120, 72.900, [19.110, 19.135], [72.890, 72.910], 45000,  False),
+        ("z8",  "Kurla",         19.070, 72.880, [19.060, 19.085], [72.870, 72.890], 85000,  True),
+        ("z9",  "Dharavi",       19.042, 72.855, [19.035, 19.050], [72.850, 72.860], 100000, True),
+        ("z10", "Sion",          19.040, 72.865, [19.030, 19.050], [72.860, 72.875], 55000,  False),
+        ("z11", "Chembur",       19.055, 72.895, [19.045, 19.070], [72.885, 72.910], 60000,  False),
+        ("z12", "Borivali",      19.230, 72.860, [19.220, 19.245], [72.850, 72.870], 75000,  False),
+        ("z13", "Thane",         19.200, 72.975, [19.180, 19.220], [72.960, 72.990], 80000,  False),
+        ("z14", "Navi Mumbai",   19.050, 73.020, [19.030, 19.070], [73.000, 73.040], 65000,  True),
     ]
 
     zones = []
@@ -53,8 +57,141 @@ def build_mumbai():
             polygon=polygon, population=pop, flood_prone=flood
         ))
 
+    # ── Real-world infrastructure with accurate lat/lng ──────────────────
+    # Named items are placed at their actual IRL locations.  The remaining
+    # items (to meet simulation counts) are randomly placed within the
+    # corrected land-only bounding boxes.
+
+    named_infra = [
+        # ── Hospitals (real locations) ──
+        ("hosp_kem",   "KEM Hospital, Parel",            "hospital",       19.0003, 72.8422, 600),
+        ("hosp_sion",  "Sion Hospital",                   "hospital",       19.0392, 72.8627, 500),
+        ("hosp_jj",    "JJ Hospital, Byculla",            "hospital",       18.9638, 72.8337, 550),
+        ("hosp_lila",  "Lilavati Hospital, Bandra",       "hospital",       19.0509, 72.8282, 400),
+        ("hosp_nana",  "Nanavati Hospital, Vile Parle",   "hospital",       19.0968, 72.8434, 450),
+        ("hosp_hind",  "Hinduja Hospital, Mahim",         "hospital",       19.0375, 72.8399, 480),
+        ("hosp_brea",  "Breach Candy Hospital",           "hospital",       18.9715, 72.8060, 350),
+        ("hosp_jasl",  "Jaslok Hospital, Peddar Rd",      "hospital",       18.9695, 72.8112, 380),
+        ("hosp_bomb",  "Bombay Hospital, Marine Lines",   "hospital",       18.9383, 72.8302, 500),
+        ("hosp_glob",  "Global Hospital, Parel",          "hospital",       19.0013, 72.8402, 300),
+        ("hosp_kohi",  "Kohinoor Hospital, Kurla",        "hospital",       19.0723, 72.8846, 280),
+        ("hosp_forh",  "Fortis Hospital, Mulund",         "hospital",       19.1751, 72.9519, 400),
+        ("hosp_hira",  "Hiranandani Hospital, Powai",     "hospital",       19.1193, 72.9082, 350),
+        ("hosp_holy",  "Holy Family Hospital, Bandra",    "hospital",       19.0443, 72.8411, 260),
+        ("hosp_seve",  "Seven Hills Hospital, Andheri",   "hospital",       19.1097, 72.8599, 370),
+        ("hosp_nair",  "Nair Hospital, Mumbai Central",   "hospital",       18.9775, 72.8268, 500),
+        ("hosp_rahi",  "Rajawadi Hospital, Ghatkopar",    "hospital",       19.0862, 72.9098, 350),
+        ("hosp_vrn",   "V N Desai Hospital, Santacruz",   "hospital",       19.0802, 72.8516, 250),
+        ("hosp_coop",  "Cooper Hospital, Vile Parle",     "hospital",       19.1014, 72.8470, 280),
+        ("hosp_masn",  "Masina Hospital, Byculla",        "hospital",       18.9773, 72.8354, 200),
+
+        # ── Power Stations / Grid Substations ──
+        ("pow_tromb",  "Trombay Thermal Power Stn",       "power_station",  19.0160, 72.9120, 2000),
+        ("pow_dahanu","Dahanu Grid Relay – Borivali",     "power_station",  19.2280, 72.8560, 1500),
+        ("pow_andr",   "Andheri-MSEDCL Substation",       "power_station",  19.1150, 72.8550, 800),
+        ("pow_bndra",  "Bandra Reclamation Substation",   "power_station",  19.0440, 72.8370, 700),
+        ("pow_chrni",  "Churchgate Grid Substation",      "power_station",  18.9350, 72.8280, 600),
+        ("pow_kurla",  "Kurla 220kV Substation",          "power_station",  19.0700, 72.8790, 800),
+        ("pow_gtkpr",  "Ghatkopar Substation",            "power_station",  19.0870, 72.9100, 650),
+        ("pow_thane",  "Thane MSETCL Substation",         "power_station",  19.1960, 72.9630, 900),
+        ("pow_chmbr",  "Chembur 132kV Substation",        "power_station",  19.0550, 72.9000, 550),
+        ("pow_mlnd",   "Mulund Receiving Station",        "power_station",  19.1700, 72.9560, 700),
+
+        # ── Fire Stations ──
+        ("fire_byc",   "Mumbai Fire Brigade HQ, Byculla", "fire_station",  18.9785, 72.8322, 200),
+        ("fire_bndra", "Bandra Fire Station",             "fire_station",  19.0545, 72.8377, 150),
+        ("fire_andr",  "Andheri Fire Station",            "fire_station",  19.1127, 72.8534, 150),
+        ("fire_dadr",  "Dadar Fire Station",              "fire_station",  19.0178, 72.8438, 120),
+        ("fire_kurla", "Kurla Fire Station",              "fire_station",   19.0692, 72.8785, 130),
+        ("fire_borv",  "Borivali Fire Station",           "fire_station",  19.2310, 72.8560, 140),
+        ("fire_chmbr","Chembur Fire Station",             "fire_station",  19.0590, 72.8970, 120),
+        ("fire_gtkpr","Ghatkopar Fire Station",           "fire_station",  19.0840, 72.9070, 110),
+        ("fire_mlnd", "Mulund Fire Station",              "fire_station",  19.1690, 72.9490, 120),
+        ("fire_wrli", "Worli Fire Station",               "fire_station",  19.0180, 72.8180, 130),
+
+        # ── Police Stations ──
+        ("pol_colaba", "Colaba Police Station",           "police_station", 18.9220, 72.8320, 100),
+        ("pol_bndra",  "Bandra Police Station",           "police_station", 19.0530, 72.8400, 120),
+        ("pol_andr",   "Andheri Police Station",          "police_station", 19.1177, 72.8490, 110),
+        ("pol_juhu",   "Juhu Police Station",             "police_station", 19.0950, 72.8350, 90),
+        ("pol_kurla",  "Kurla Police Station",            "police_station", 19.0700, 72.8810, 100),
+        ("pol_dadr",   "Dadar Police Station",            "police_station", 19.0185, 72.8440, 100),
+        ("pol_borv",   "Borivali Police Station",         "police_station", 19.2290, 72.8555, 110),
+        ("pol_thane",  "Thane Nagar Police Station",      "police_station", 19.1960, 72.9700, 130),
+        ("pol_chmbr",  "Chembur Police Station",          "police_station", 19.0580, 72.8960, 100),
+        ("pol_gtkpr",  "Ghatkopar Police Station",        "police_station", 19.0855, 72.9120, 100),
+        ("pol_mahim",  "Mahim Police Station",            "police_station", 19.0383, 72.8400, 90),
+        ("pol_sntcrz", "Santacruz Police Station",        "police_station", 19.0830, 72.8430, 100),
+        ("pol_marns",  "Marine Drive Police Stn",         "police_station", 18.9430, 72.8240, 80),
+        ("pol_pvrng",  "Pavan Hans, Vashi PS",            "police_station", 19.0660, 72.9990, 100),
+
+        # ── Shelters / Relief Camps ──
+        ("shl_azad",   "Azad Maidan Relief Camp",         "shelter",        18.9398, 72.8324, 800),
+        ("shl_dharv",  "Dharavi Community Shelter",        "shelter",        19.0430, 72.8550, 1200),
+        ("shl_bndra",  "Bandra Reclamation Shelter",       "shelter",       19.0447, 72.8360, 600),
+        ("shl_andr",   "Andheri Sports Complex Shelter",   "shelter",       19.1200, 72.8480, 700),
+        ("shl_kurla",  "Kurla BKC Relief Camp",            "shelter",       19.0650, 72.8710, 900),
+        ("shl_borv",   "Borivali National Park Shelter",   "shelter",       19.2350, 72.8620, 500),
+        ("shl_chmbr",  "Chembur Relief Ground",            "shelter",       19.0560, 72.8940, 600),
+        ("shl_sion",   "Sion Relief Camp",                 "shelter",       19.0400, 72.8610, 550),
+        ("shl_worli",  "Worli Seaface Shelter",            "shelter",       19.0210, 72.8200, 450),
+        ("shl_malad",  "Malad Community Shelter",          "shelter",       19.1870, 72.8430, 650),
+        ("shl_thane",  "Thane Civic Relief Camp",          "shelter",       19.2000, 72.9650, 800),
+        ("shl_nvm",    "Navi Mumbai Relief Camp",          "shelter",       19.0350, 73.0200, 700),
+
+        # ── Metro Stations (actual Mumbai Metro locations) ──
+        ("mtr_gtkpr",  "Ghatkopar Metro Station",         "metro_station",  19.0868, 72.9085, 300),
+        ("mtr_andr",   "Andheri Metro Station",            "metro_station",  19.1190, 72.8465, 300),
+        ("mtr_vrso",   "Versova Metro Station",            "metro_station",  19.1310, 72.8195, 200),
+        ("mtr_dngri",  "DN Nagar Metro Station",           "metro_station",  19.1254, 72.8356, 200),
+        ("mtr_saki",   "Saki Naka Metro Station",          "metro_station",  19.1017, 72.8893, 200),
+        ("mtr_chakg",  "Chakala Metro Station",            "metro_station",  19.1110, 72.8583, 200),
+        ("mtr_aarey",  "Aarey Colony Metro Station",       "metro_station",  19.1460, 72.8670, 150),
+        ("mtr_mrl",    "Marol Naka Metro Station",         "metro_station",  19.1085, 72.8780, 200),
+        ("mtr_weh",    "WEH Metro Station",                "metro_station",  19.1092, 72.8542, 200),
+        ("mtr_azd",    "Azad Nagar Metro Station",         "metro_station",  19.1265, 72.8410, 200),
+
+        # ── Communications Towers ──
+        ("com_wrli",   "Worli Communication Tower",        "communications", 19.0170, 72.8200, 100),
+        ("com_powai",  "Powai Tech Park Comm",             "communications", 19.1180, 72.9050, 120),
+        ("com_bkc",    "BKC Data Centre Tower",            "communications", 19.0660, 72.8700, 150),
+        ("com_andr",   "Andheri West Comm Hub",            "communications", 19.1190, 72.8410, 100),
+        ("com_thane",  "Thane Comm Tower",                 "communications", 19.2050, 72.9640, 100),
+
+        # ── Water Pumping Stations ──
+        ("wtr_bhandup","Bhandup Water Treatment Plant",    "water_pump",     19.1530, 72.9360, 500),
+        ("wtr_tromb",  "Trombay Pumping Station",          "water_pump",     19.0210, 72.9050, 300),
+        ("wtr_powai",  "Powai Lake Pumping Station",       "water_pump",     19.1260, 72.9070, 250),
+        ("wtr_mlnd",   "Mulund Pumping Station",           "water_pump",     19.1730, 72.9450, 350),
+        ("wtr_vhar",   "Vihar Lake Pumping Station",       "water_pump",     19.1350, 72.9200, 300),
+    ]
+
     infrastructure = []
-    infra_counts = {
+    type_map = {
+        "hospital": InfrastructureType.HOSPITAL,
+        "power_station": InfrastructureType.POWER_STATION,
+        "fire_station": InfrastructureType.FIRE_STATION,
+        "police_station": InfrastructureType.POLICE_STATION,
+        "shelter": InfrastructureType.SHELTER,
+        "metro_station": InfrastructureType.METRO_STATION,
+        "communications": InfrastructureType.COMMUNICATIONS,
+        "water_pump": InfrastructureType.WATER_PUMP,
+    }
+
+    # Add all named real-world infrastructure
+    for inf_id, inf_name, inf_type_str, inf_lat, inf_lng, inf_cap in named_infra:
+        infrastructure.append(Infrastructure(
+            id=inf_id, name=inf_name, type=type_map[inf_type_str],
+            lat=inf_lat, lng=inf_lng, capacity=inf_cap,
+        ))
+
+    # Count how many of each type we already have
+    existing_counts = {}
+    for infra in infrastructure:
+        existing_counts[infra.type] = existing_counts.get(infra.type, 0) + 1
+
+    # Target counts — fill remaining with random land-bound locations
+    infra_targets = {
         InfrastructureType.HOSPITAL: 45,
         InfrastructureType.POWER_STATION: 25,
         InfrastructureType.SHELTER: 50,
@@ -66,13 +203,15 @@ def build_mumbai():
     }
 
     def random_coord_in_land():
+        """Pick a random coordinate guaranteed to be on land."""
         dist = random.choice(district_data)
         lat = random.uniform(dist[4][0], dist[4][1])
         lng = random.uniform(dist[5][0], dist[5][1])
         return lat, lng, dist[1]
 
-    for i_type, count in infra_counts.items():
-        for i in range(count):
+    for i_type, target in infra_targets.items():
+        have = existing_counts.get(i_type, 0)
+        for i in range(target - have):
             lat, lng, dist_name = random_coord_in_land()
             capacity = random.randint(100, 1000)
             if i_type == InfrastructureType.HOSPITAL:
@@ -85,18 +224,20 @@ def build_mumbai():
                 name = f"BMC Relief Camp {random.randint(1,99)} - {dist_name}"
             else:
                 name = f"{i_type.name.title().replace('_', ' ')} {random.randint(1,50)} ({dist_name})"
-                
+
             infrastructure.append(Infrastructure(
-                id=f"{i_type.value}_{i}", name=name, type=i_type, lat=lat, lng=lng, capacity=capacity
+                id=f"{i_type.value}_{have + i}", name=name, type=i_type,
+                lat=lat, lng=lng, capacity=capacity,
             ))
 
+    # ── Roads ────────────────────────────────────────────────────────────
     roads = []
     weh_points = []
-    lat, lng = 18.93, 72.82
+    lat, lng = 18.94, 72.83
     for _ in range(25):
         weh_points.append([lat, lng])
         lat += random.uniform(0.01, 0.015)
-        lng += random.uniform(-0.002, 0.005)
+        lng += random.uniform(-0.001, 0.003)
     roads.append(Road(id="r_weh", name="Western Express Highway", points=weh_points))
 
     eeh_points = []
@@ -114,8 +255,8 @@ def build_mumbai():
         pts = [[clat, clng]]
         cur_lat, cur_lng = clat, clng
         for _ in range(random.randint(3, 8)):
-            cur_lat += random.uniform(-0.008, 0.008)
-            cur_lng += random.uniform(-0.008, 0.008)
+            cur_lat += random.uniform(-0.006, 0.006)
+            cur_lng += random.uniform(-0.006, 0.006)
             pts.append([cur_lat, cur_lng])
         roads.append(Road(id=f"r_conn_{i}", name=f"Local Arterial - {dist[1]}", points=pts))
 
@@ -200,8 +341,9 @@ class SimulationEngine:
         self.tick += 1
 
         # Gradually increase disaster intensity over time
-        if self.disaster.intensity < 95:
-            self.disaster.intensity = min(100, self.disaster.intensity + random.uniform(0.5, 2.5))
+        disaster = self.disaster
+        if disaster and disaster.intensity < 95:
+            disaster.intensity = min(100, disaster.intensity + random.uniform(0.5, 2.5))  # pyre-ignore
 
         # ── 1. Weather Agent → updates zone hazard intensities ──
         weather_recs = self.agents["weather"].analyze(
@@ -277,7 +419,7 @@ class SimulationEngine:
                 self.agent_logs.append(log)
 
         if len(self.agent_logs) > 50:
-            self.agent_logs = self.agent_logs[-50:]
+            self.agent_logs = self.agent_logs[-50:]  # pyre-ignore[6]
 
         # Build cascading events
         self.cascading_events = self._compute_cascading_events()
@@ -285,7 +427,7 @@ class SimulationEngine:
         state = self.get_state()
         self.timeline.append(state.dict())
         if len(self.timeline) > 60:
-            self.timeline = self.timeline[-60:]
+            self.timeline = self.timeline[-60:]  # pyre-ignore[6]
 
         return state
 
@@ -294,14 +436,18 @@ class SimulationEngine:
         events = []
         step = 1
 
+        disaster = self.disaster
+        if not disaster:
+            return events
+
         blocked_roads = [r for r in self.roads if r.blocked]
         if blocked_roads:
             events.append(CascadingEvent(
                 step=step,
-                source=str(self.disaster.type).title(),
+                source=str(disaster.type).title(),
                 target="Road Network",
-                description=f"{len(blocked_roads)} road(s) blocked by {self.disaster.type}",
-                icon="🌊" if self.disaster.type == DisasterType.FLOOD else "🌍"
+                description=f"{len(blocked_roads)} road(s) blocked by {disaster.type}",
+                icon="🌊" if disaster.type == DisasterType.FLOOD else "🌍"
             ))
             step += 1
 
