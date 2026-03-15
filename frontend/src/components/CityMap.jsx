@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, Polygon, Popup, useMap, useMapEvents, LayersControl, LayerGroup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, CircleMarker, Polygon, Popup, useMap, useMapEvents, LayersControl, LayerGroup } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -83,6 +83,7 @@ function MapUpdater({ center, zoom, onZoomChange }) {
 
 const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
     const [currentZoom, setCurrentZoom] = useState(ZOOM);
+    const [legendOpen, setLegendOpen] = useState(false);
 
     const { zones = [], infrastructure = [], roads = [] } = state || {};
 
@@ -95,15 +96,12 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
     // Visibility thresholds — show less by default
     const showShelters = currentZoom > 11;
     const showMinorInfra = currentZoom > 13;
-    const showMinorRoads = currentZoom > 11;
+    // Minor roads now checked inline (currentZoom > 12)
 
     if (!state) return null;
 
-    // CartoDB Voyager (light) has clear blue water & white/beige land
-    // CartoDB DarkMatter (dark) has dark navy water & very dark gray land — excellent contrast
-    const tileUrl = theme === 'light'
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    // Use OSM tiles for both modes — dark mode is inverted via CSS filter
+    const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
     const popupBg = theme === 'light' ? '#fff' : '#141b2d';
     const popupColor = theme === 'light' ? '#0f172a' : '#e2e8f0';
@@ -114,10 +112,10 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                 <MapUpdater center={CENTER} zoom={ZOOM} onZoomChange={setCurrentZoom} />
                 <TileLayer
                     key={theme}
-                    attribution='&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
                     url={tileUrl}
-                    subdomains='abcd'
-                    maxZoom={20}
+                    subdomains='abc'
+                    maxZoom={19}
                 />
 
                 <LayersControl position="topright">
@@ -132,10 +130,9 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                                         pathOptions={{
                                             color: getRiskColor(zone.risk_score),
                                             fillColor: getRiskColor(zone.risk_score),
-                                            fillOpacity: isHighRisk ? (theme === 'light' ? 0.25 : 0.2) : (theme === 'light' ? 0.12 : 0.08),
+                                            fillOpacity: isHighRisk ? (theme === 'light' ? 0.22 : 0.18) : (theme === 'light' ? 0.1 : 0.07),
                                             weight: isHighRisk ? (theme === 'light' ? 2.5 : 2) : (theme === 'light' ? 1.5 : 1),
-                                            opacity: isHighRisk ? (theme === 'light' ? 0.9 : 0.8) : (theme === 'light' ? 0.6 : 0.45),
-                                            dashArray: isHighRisk ? '4, 4' : null,
+                                            opacity: isHighRisk ? (theme === 'light' ? 0.9 : 0.8) : (theme === 'light' ? 0.5 : 0.4),
                                         }}
                                         eventHandlers={{ click: () => onZoneClick?.(zone) }}
                                     >
@@ -161,41 +158,46 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                                     pathOptions={{
                                         color: getRiskColor(zone.risk_score),
                                         fillColor: getRiskColor(zone.risk_score),
-                                        fillOpacity: theme === 'light' ? zone.risk_score / 180 : zone.risk_score / 250,
-                                        weight: zone.risk_score > 70 ? (theme === 'light' ? 2 : 1.5) : 0.5,
+                                        fillOpacity: theme === 'light' ? zone.risk_score / 160 : zone.risk_score / 220,
+                                        weight: zone.risk_score > 70 ? (theme === 'light' ? 2.5 : 2) : (theme === 'light' ? 1 : 0.5),
                                     }}
                                 />
                             ))}
                         </LayerGroup>
                     </Overlay>
 
-                    <Overlay checked name="Roads">
+                    <Overlay checked name="Road Status">
                         <LayerGroup>
-                            {roads.map(road => {
-                                // Only show blocked/degraded at default zoom
-                                if (!road.blocked && road.status === 'operational' && !showMinorRoads) return null;
-                                return (
-                                    <Polyline
-                                        key={road.id}
-                                        positions={road.points}
-                                        pathOptions={{
-                                            color: road.blocked ? COLORS.critical : road.status === 'degraded' ? COLORS.warning : (theme === 'light' ? 'rgba(51,65,85,0.55)' : 'rgba(148,163,184,0.5)'),
-                                            weight: road.blocked ? (theme === 'light' ? 3.5 : 3) : (theme === 'light' ? 2 : 1.5),
-                                            opacity: road.blocked ? (theme === 'light' ? 1 : 0.9) : (theme === 'light' ? 0.7 : 0.5),
-                                            dashArray: road.blocked ? '5, 5' : null,
-                                        }}
-                                    >
-                                        <Popup>
-                                            <div style={{ color: popupColor, background: popupBg }}>
-                                                <div style={{ fontWeight: 600, fontSize: 12 }}>{road.name}</div>
-                                                <div style={{ fontSize: 11, color: getStatusColor(road.status), fontWeight: 600 }}>
-                                                    {road.blocked ? 'BLOCKED' : road.status.toUpperCase()}
+                            {roads
+                                .filter(road => road.blocked || road.status === 'degraded')
+                                .map(road => {
+                                    // Show disrupted roads as a circle indicator at the road's midpoint
+                                    const mid = road.points[Math.floor(road.points.length / 2)];
+                                    const color = road.blocked ? COLORS.critical : COLORS.warning;
+                                    return (
+                                        <CircleMarker
+                                            key={road.id}
+                                            center={mid}
+                                            radius={road.blocked ? 8 : 6}
+                                            pathOptions={{
+                                                color: color,
+                                                fillColor: color,
+                                                fillOpacity: theme === 'light' ? 0.7 : 0.6,
+                                                weight: 2,
+                                                opacity: 0.9,
+                                            }}
+                                        >
+                                            <Popup>
+                                                <div style={{ color: popupColor, background: popupBg }}>
+                                                    <div style={{ fontWeight: 600, fontSize: 12 }}>{road.name}</div>
+                                                    <div style={{ fontSize: 11, color, fontWeight: 600 }}>
+                                                        {road.blocked ? '⛔ BLOCKED' : '⚠ DEGRADED'}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </Popup>
-                                    </Polyline>
-                                );
-                            })}
+                                            </Popup>
+                                        </CircleMarker>
+                                    );
+                                })}
                         </LayerGroup>
                     </Overlay>
 
@@ -268,31 +270,107 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                 </LayersControl>
             </MapContainer>
 
-            {/* Minimal legend — small floating pill in bottom-right */}
-            <div style={{
-                position: 'absolute', bottom: 8, right: 8, zIndex: 1000,
-                padding: '4px 10px',
-                background: theme === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(11, 15, 25, 0.92)',
-                borderRadius: 6,
-                fontSize: 9,
-                display: 'flex', alignItems: 'center', gap: 10,
-                pointerEvents: 'none',
-                border: theme === 'light' ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
-                backdropFilter: 'blur(4px)',
-            }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.critical, display: 'inline-block' }} />
-                    <span style={{ color: theme === 'light' ? '#475569' : '#94a3b8' }}>Critical</span>
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.warning, display: 'inline-block' }} />
-                    <span style={{ color: theme === 'light' ? '#475569' : '#94a3b8' }}>Warning</span>
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: COLORS.healthy, display: 'inline-block' }} />
-                    <span style={{ color: theme === 'light' ? '#475569' : '#94a3b8' }}>OK</span>
-                </span>
-            </div>
+            {/* Map Index / Legend — collapsible panel */}
+            {legendOpen && (
+                <div style={{
+                    position: 'absolute', bottom: 44, left: 8, zIndex: 1000,
+                    padding: '10px 14px',
+                    background: theme === 'light' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(11, 15, 25, 0.95)',
+                    borderRadius: 8,
+                    fontSize: 11,
+                    border: theme === 'light' ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
+                    backdropFilter: 'blur(8px)',
+                    minWidth: 180, maxHeight: 340, overflowY: 'auto',
+                    boxShadow: theme === 'light' ? '0 4px 16px rgba(0,0,0,0.1)' : '0 4px 16px rgba(0,0,0,0.4)',
+                }}>
+                    {/* Section: Infrastructure */}
+                    <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: theme === 'light' ? '#475569' : '#94a3b8', marginBottom: 6 }}>
+                        Infrastructure
+                    </div>
+                    {[
+                        { label: 'Hospital', color: COLORS.healthy, icon: '✚' },
+                        { label: 'Power Station', color: COLORS.healthy, icon: '⚡' },
+                        { label: 'Shelter', color: COLORS.healthy, icon: '🏠' },
+                        { label: 'Fire Station', color: COLORS.healthy, icon: '🔥' },
+                        { label: 'Police Station', color: COLORS.healthy, icon: '🛡' },
+                    ].map(item => (
+                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, color: theme === 'light' ? '#334155' : '#cbd5e1' }}>
+                            <span style={{ width: 18, height: 18, borderRadius: '50%', background: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, flexShrink: 0, border: '1.5px solid white', boxShadow: '0 1px 3px rgba(0,0,0,0.3)' }}>
+                                {item.icon}
+                            </span>
+                            <span>{item.label}</span>
+                        </div>
+                    ))}
+
+                    {/* Section: Status Colors */}
+                    <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: theme === 'light' ? '#475569' : '#94a3b8', marginTop: 10, marginBottom: 6 }}>
+                        Status Colors
+                    </div>
+                    {[
+                        { label: 'Operational', color: COLORS.healthy },
+                        { label: 'Degraded', color: COLORS.warning },
+                        { label: 'Failed / Critical', color: COLORS.critical },
+                    ].map(item => (
+                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, color: theme === 'light' ? '#334155' : '#cbd5e1' }}>
+                            <span style={{ width: 10, height: 10, borderRadius: '50%', background: item.color, display: 'inline-block', flexShrink: 0 }} />
+                            <span>{item.label}</span>
+                        </div>
+                    ))}
+
+                    {/* Section: Risk Zones */}
+                    <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: theme === 'light' ? '#475569' : '#94a3b8', marginTop: 10, marginBottom: 6 }}>
+                        Risk Zones
+                    </div>
+                    {[
+                        { label: 'Critical (>70%)', color: COLORS.critical },
+                        { label: 'Warning (40–70%)', color: COLORS.warning },
+                        { label: 'Moderate (15–40%)', color: '#ca8a04' },
+                        { label: 'Low (<15%)', color: COLORS.healthy },
+                    ].map(item => (
+                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, color: theme === 'light' ? '#334155' : '#cbd5e1' }}>
+                            <span style={{ width: 16, height: 10, borderRadius: 2, background: item.color, opacity: 0.7, display: 'inline-block', flexShrink: 0, border: `1px solid ${item.color}` }} />
+                            <span>{item.label}</span>
+                        </div>
+                    ))}
+
+                    {/* Section: Road Status */}
+                    <div style={{ fontWeight: 700, fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase', color: theme === 'light' ? '#475569' : '#94a3b8', marginTop: 10, marginBottom: 6 }}>
+                        Road Status
+                    </div>
+                    {[
+                        { label: 'Blocked', color: COLORS.critical, icon: '⛔' },
+                        { label: 'Degraded', color: COLORS.warning, icon: '⚠' },
+                    ].map(item => (
+                        <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, color: theme === 'light' ? '#334155' : '#cbd5e1' }}>
+                            <span style={{ width: 12, height: 12, borderRadius: '50%', background: item.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, flexShrink: 0 }}>
+                                {item.icon}
+                            </span>
+                            <span>{item.label}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Toggle button for legend */}
+            <button
+                onClick={() => setLegendOpen(prev => !prev)}
+                style={{
+                    position: 'absolute', bottom: 8, left: 8, zIndex: 1000,
+                    padding: '5px 10px',
+                    background: theme === 'light' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(11, 15, 25, 0.95)',
+                    borderRadius: 6,
+                    fontSize: 10, fontWeight: 600,
+                    color: theme === 'light' ? '#475569' : '#94a3b8',
+                    border: theme === 'light' ? '1px solid rgba(0,0,0,0.1)' : '1px solid rgba(255,255,255,0.1)',
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(4px)',
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    boxShadow: theme === 'light' ? '0 2px 6px rgba(0,0,0,0.08)' : '0 2px 6px rgba(0,0,0,0.3)',
+                }}
+            >
+                <span style={{ fontSize: 12 }}>{legendOpen ? '✕' : '☰'}</span>
+                <span>Map Index</span>
+            </button>
         </div>
     );
 });

@@ -19,6 +19,10 @@ from strategy_ranker import rank_strategies
 
 def build_mumbai():
     """Build a realistic Mumbai layout centered around lat 19.0760, lng 72.8777."""
+    # Fixed seed so infrastructure locations are deterministic across resets
+    rng_state = random.getstate()
+    random.seed(42)
+
     district_data = [
         ("z1", "South Mumbai", 18.96, 72.82, [18.92, 19.00], [72.81, 72.84], 80000, True),
         ("z2", "Colaba", 18.91, 72.81, [18.89, 18.93], [72.80, 72.82], 40000, True),
@@ -114,6 +118,9 @@ def build_mumbai():
             cur_lng += random.uniform(-0.008, 0.008)
             pts.append([cur_lat, cur_lng])
         roads.append(Road(id=f"r_conn_{i}", name=f"Local Arterial - {dist[1]}", points=pts))
+
+    # Restore RNG state so simulation ticks remain random
+    random.setstate(rng_state)
 
     return zones, infrastructure, roads
 
