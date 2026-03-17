@@ -306,7 +306,7 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
     const toggleLayer = (key) =>
         setVisibleLayers(prev => ({ ...prev, [key]: !prev[key] }));
 
-    const { zones = [], infrastructure = [], roads = [] } = state || {};
+    const { zones = [], infrastructure = [], roads = [], ml_output = null } = state || {};
     const isPublic   = userRole === 'public';
     const isOperator = userRole === 'operator';
 
@@ -362,6 +362,7 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                     <LayerGroup>
                         {zones.map(zone => {
                             const isHighRisk = zone.risk_score > 60;
+                            const mlPrediction = ml_output?.predictions?.find(p => p.zone_id === zone.id);
                             return (
                                 <Polygon
                                     key={zone.id}
@@ -388,6 +389,30 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                                                         Risk: <span style={{ color: getRiskColor(zone.risk_score), fontWeight: 600 }}>{zone.risk_score.toFixed(0)}%</span>
                                                     </div>
                                                     <div style={{ fontSize: 11, color: popupColor, opacity: 0.7 }}>Pop: {zone.population.toLocaleString()}</div>
+                                                    {mlPrediction && (
+                                                        <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(128,128,128,0.2)' }}>
+                                                            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--primary)', marginBottom: 2 }}>ML PREDICTIONS</div>
+                                                            <div style={{ fontSize: 10, display: 'flex', justifyContent: 'space-between' }}>
+                                                                <span>Casualties:</span>
+                                                                <span style={{ fontWeight: 600, color: '#ef4444' }}>{mlPrediction.predicted_casualties}</span>
+                                                            </div>
+                                                            <div style={{ fontSize: 10, display: 'flex', justifyContent: 'space-between' }}>
+                                                                <span>Risk CI:</span>
+                                                                <span style={{ fontWeight: 600 }}>{mlPrediction.risk_confidence_low.toFixed(0)}% - {mlPrediction.risk_confidence_high.toFixed(0)}%</span>
+                                                            </div>
+                                                            <div style={{ fontSize: 10, marginTop: 4, display: 'flex', gap: 6 }}>
+                                                                <div style={{ flex: 1, padding: 2, background: 'rgba(239,68,68,0.1)', borderRadius: 2, textAlign: 'center', color: '#ef4444', fontWeight: 600 }}>
+                                                                    {mlPrediction.ambulances_allocated} 🚑
+                                                                </div>
+                                                                <div style={{ flex: 1, padding: 2, background: 'rgba(245,158,11,0.1)', borderRadius: 2, textAlign: 'center', color: '#f59e0b', fontWeight: 600 }}>
+                                                                    {mlPrediction.generators_allocated} ⚡
+                                                                </div>
+                                                                <div style={{ flex: 1, padding: 2, background: 'rgba(34,197,94,0.1)', borderRadius: 2, textAlign: 'center', color: '#22c55e', fontWeight: 600 }}>
+                                                                    {mlPrediction.shelter_buses_allocated} 🚌
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </>
                                             )}
                                         </div>

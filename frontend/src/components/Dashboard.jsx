@@ -64,7 +64,7 @@ const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', use
     const [hasScrolled, setHasScrolled] = useState(false);
     if (!state) return null;
 
-    const { zones = [], recommendations = [], overall_risk = 0, tick = 0, disaster } = state;
+    const { zones = [], recommendations = [], overall_risk = 0, tick = 0, disaster, ml_output } = state;
 
     const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     const allRecs = recommendations
@@ -210,6 +210,57 @@ const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', use
                             ↓ scroll for more
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* AI ML Predictions */}
+            {ml_output && (
+                <div className="glass-card" style={{ padding: '14px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
+                            AI ML Predictions
+                        </span>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                             <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--primary)', padding: '2px 6px', borderRadius: 4, background: 'rgba(59,130,246,0.1)' }}>
+                                {ml_output.optimization_status.toUpperCase()}
+                             </span>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+                        {/* Model Accuracy metrics */}
+                        <div style={{ flex: 1, padding: '8px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 600, marginBottom: 2 }}>Risk Model (R²)</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--success)' }}>
+                                {(ml_output.model_accuracy_r2 * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                        <div style={{ flex: 1, padding: '8px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 600, marginBottom: 2 }}>Casualty Model (R²)</div>
+                            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--success)' }}>
+                                {(ml_output.casualty_model_r2 * 100).toFixed(1)}%
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                        Allocated Resources (via OR-Tools)
+                    </div>
+                    
+                    <div style={{ display: 'flex', gap: 4 }}>
+                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px', background: 'rgba(239,68,68,0.04)', borderRadius: 4, border: '1px solid rgba(239,68,68,0.1)' }}>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: '#ef4444' }}>{ml_output.total_ambulances_deployed}</span>
+                              <span style={{ fontSize: 9, color: 'var(--text-secondary)', fontWeight: 600 }}>Ambulances</span>
+                         </div>
+                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px', background: 'rgba(245,158,11,0.04)', borderRadius: 4, border: '1px solid rgba(245,158,11,0.1)' }}>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: '#f59e0b' }}>{ml_output.total_generators_deployed}</span>
+                              <span style={{ fontSize: 9, color: 'var(--text-secondary)', fontWeight: 600 }}>Generators</span>
+                         </div>
+                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px', background: 'rgba(34,197,94,0.04)', borderRadius: 4, border: '1px solid rgba(34,197,94,0.1)' }}>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: '#22c55e' }}>{ml_output.total_shelter_buses_deployed}</span>
+                              <span style={{ fontSize: 9, color: 'var(--text-secondary)', fontWeight: 600 }}>Buses</span>
+                         </div>
+                    </div>
                 </div>
             )}
 
