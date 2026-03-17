@@ -56,7 +56,7 @@ class Zone(BaseModel):
     name: str
     center: list[float]  # [lat, lng]
     radius: float  # meters
-    polygon: list[list[float]]  # [[lat, lng], ...]
+    polygon: list  # Can be nested arrays for MultiPolygons
     risk_score: float = 0.0  # 0-100
     population: int = 0
     flood_prone: bool = False
