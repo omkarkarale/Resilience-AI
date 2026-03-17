@@ -4,10 +4,10 @@
 
 /* ── Color Tokens ── */
 :root {
-    --primary: #3b82f6;
-    --primary-dim: #2563eb;
-    --primary-subtle: rgba(59, 130, 246, 0.08);
-    --primary-muted: rgba(59, 130, 246, 0.15);
+    --primary: #94a3b8;
+    --primary-dim: #cbd5e1;
+    --primary-subtle: rgba(148, 163, 184, 0.08);
+    --primary-muted: rgba(148, 163, 184, 0.15);
 
     --secondary: #6366f1;
     --danger: #ef4444;
@@ -24,17 +24,17 @@
     --text-tertiary: #4b5563;
 
     --border: rgba(255, 255, 255, 0.06);
-    --border-active: rgba(59, 130, 246, 0.25);
+    --border-active: rgba(148, 163, 184, 0.25);
     --range-track: rgba(255, 255, 255, 0.1);
     --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.25);
 }
 
 [data-theme="light"] {
-    --primary: #2563eb;
-    --primary-dim: #1d4ed8;
-    --primary-subtle: rgba(37, 99, 235, 0.06);
-    --primary-muted: rgba(37, 99, 235, 0.12);
+    --primary: #64748b;
+    --primary-dim: #94a3b8;
+    --primary-subtle: rgba(100, 116, 139, 0.06);
+    --primary-muted: rgba(100, 116, 139, 0.12);
 
     --secondary: #4f46e5;
     --danger: #dc2626;
@@ -51,7 +51,7 @@
     --text-tertiary: #94a3b8;
 
     --border: rgba(0, 0, 0, 0.06);
-    --border-active: rgba(37, 99, 235, 0.25);
+    --border-active: rgba(100, 116, 139, 0.25);
     --range-track: rgba(0, 0, 0, 0.08);
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
@@ -193,7 +193,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
 }
-.btn-primary:hover { background: var(--primary-dim); box-shadow: 0 2px 8px rgba(59,130,246,0.25); }
+.btn-primary:hover { background: var(--primary-dim); box-shadow: 0 2px 8px rgba(148,163,184,0.15); }
 .btn-primary:active { transform: scale(0.98); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
