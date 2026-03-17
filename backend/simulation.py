@@ -231,35 +231,90 @@ def build_mumbai():
                 lat=lat, lng=lng, capacity=capacity,
             ))
 
-    # ── Roads ────────────────────────────────────────────────────────────
+    # ── Roads — Real Mumbai road coordinates ────────────────────────────
     roads = []
-    weh_points = []
-    lat, lng = 18.94, 72.83
-    for _ in range(25):
-        weh_points.append([lat, lng])
-        lat += random.uniform(0.01, 0.015)
-        lng += random.uniform(-0.001, 0.003)
-    roads.append(Road(id="r_weh", name="Western Express Highway", points=weh_points))
 
-    eeh_points = []
-    lat, lng = 19.03, 72.86
-    for _ in range(20):
-        eeh_points.append([lat, lng])
-        lat += random.uniform(0.01, 0.015)
-        lng += random.uniform(0.002, 0.008)
-    roads.append(Road(id="r_eeh", name="Eastern Express Highway", points=eeh_points))
+    # ── MAJOR HIGHWAYS ──
+    roads.append(Road(id="r_weh", name="Western Express Highway", points=[
+        [19.0411, 72.8419], [19.0544, 72.8402], [19.0813, 72.8479],
+        [19.1013, 72.8553], [19.1197, 72.8468], [19.1378, 72.8456],
+        [19.1545, 72.8488], [19.2285, 72.8567],
+    ]))
 
-    num_connectors = 40
-    for i in range(num_connectors):
-        dist = random.choice(district_data)
-        clat, clng = dist[2], dist[3]
-        pts = [[clat, clng]]
-        cur_lat, cur_lng = clat, clng
-        for _ in range(random.randint(3, 8)):
-            cur_lat += random.uniform(-0.006, 0.006)
-            cur_lng += random.uniform(-0.006, 0.006)
-            pts.append([cur_lat, cur_lng])
-        roads.append(Road(id=f"r_conn_{i}", name=f"Local Arterial - {dist[1]}", points=pts))
+    roads.append(Road(id="r_eeh", name="Eastern Express Highway", points=[
+        [19.0391, 72.8616], [19.0665, 72.8794], [19.0862, 72.9098],
+        [19.1087, 72.9265], [19.1193, 72.9082], [19.1751, 72.9519],
+    ]))
+
+    roads.append(Road(id="r_sion_panvel", name="Sion-Panvel Highway", points=[
+        [19.0391, 72.8616], [19.0522, 72.9005], [19.0643, 72.9186],
+        [19.0479, 72.9303],
+    ]))
+
+    # ── ARTERIAL ROADS ──
+    roads.append(Road(id="r_lbs", name="LBS Marg", points=[
+        [19.0654, 72.8792], [19.1003, 72.9198], [19.1387, 72.9358],
+    ]))
+
+    roads.append(Road(id="r_linking", name="Linking Road, Bandra", points=[
+        [19.0596, 72.8295], [19.0713, 72.8342], [19.0813, 72.8392],
+    ]))
+
+    roads.append(Road(id="r_sv", name="SV Road (Swami Vivekanand Road)", points=[
+        [19.0411, 72.8419], [19.0544, 72.8334], [19.0713, 72.8342],
+        [19.0813, 72.8392], [19.1013, 72.8437], [19.1132, 72.8467],
+    ]))
+
+    roads.append(Road(id="r_sion_bandra", name="Sion-Bandra Link Road", points=[
+        [19.0391, 72.8616], [19.0430, 72.8550], [19.0544, 72.8469],
+    ]))
+
+    roads.append(Road(id="r_ns", name="NS Road / NS Marg", points=[
+        [19.0178, 72.8178], [19.0067, 72.8267], [19.0003, 72.8422],
+    ]))
+
+    roads.append(Road(id="r_efreeway", name="Eastern Freeway", points=[
+        [18.9383, 72.8302], [18.9534, 72.8378], [18.9618, 72.8427],
+        [19.0391, 72.8616],
+    ]))
+
+    roads.append(Road(id="r_peddar", name="Peddar Road", points=[
+        [18.9715, 72.8060], [18.9634, 72.8087], [18.9823, 72.8187],
+    ]))
+
+    # ── LOCAL CONNECTORS ──
+    roads.append(Road(id="r_dharavi_sion", name="Dharavi–Sion Connector", points=[
+        [19.0430, 72.8550], [19.0391, 72.8616],
+    ]))
+
+    roads.append(Road(id="r_bandra_dharavi", name="Bandra–Dharavi Connector", points=[
+        [19.0544, 72.8469], [19.0430, 72.8550],
+    ]))
+
+    roads.append(Road(id="r_kurla_dharavi", name="Kurla–Dharavi Connector", points=[
+        [19.0654, 72.8792], [19.0430, 72.8550],
+    ]))
+
+    roads.append(Road(id="r_andheri_bandra", name="Andheri–Bandra Connector", points=[
+        [19.1197, 72.8468], [19.0544, 72.8402],
+    ]))
+
+    roads.append(Road(id="r_worli_seaface", name="Worli Sea Face", points=[
+        [19.0178, 72.8178], [18.9823, 72.8187], [18.9715, 72.8060],
+    ]))
+
+    roads.append(Road(id="r_marine_drive", name="Marine Drive", points=[
+        [18.9432, 72.8232], [18.9383, 72.8302],
+        [18.9321, 72.8254], [18.9268, 72.8193],
+    ]))
+
+    roads.append(Road(id="r_mahim", name="Mahim Causeway", points=[
+        [19.0411, 72.8419], [19.0375, 72.8399],
+    ]))
+
+    roads.append(Road(id="r_bwsl_north", name="Bandra-Worli Sea Link Approach", points=[
+        [19.0544, 72.8295], [19.0411, 72.8243], [19.0178, 72.8178],
+    ]))
 
     # Restore RNG state so simulation ticks remain random
     random.setstate(rng_state)
