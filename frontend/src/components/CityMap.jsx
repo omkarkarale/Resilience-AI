@@ -5,23 +5,23 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const CENTER = [19.0760, 72.8777];
-const ZOOM = 11;
+const ZOOM = 13;
 
 const COLORS = {
     critical: '#ef4444',
-    warning:  '#f59e0b',
-    healthy:  '#22c55e',
-    info:     '#3b82f6',
-    muted:    '#64748b',
+    warning: '#f59e0b',
+    healthy: '#22c55e',
+    info: '#3b82f6',
+    muted: '#64748b',
 };
 
 // Layer filter config — accent colors used only on hover
 const LAYER_CONFIG = [
     { key: 'hospitals', label: 'Hospitals', color: '#be185d' },
-    { key: 'roads',     label: 'Roads',     color: '#1d4ed8' },
-    { key: 'power',     label: 'Power',     color: '#b45309' },
-    { key: 'fire',      label: 'Fire',      color: '#991b1b' },
-    { key: 'shelters',  label: 'Shelters',  color: '#166534' },
+    { key: 'roads', label: 'Roads', color: '#1d4ed8' },
+    { key: 'power', label: 'Power', color: '#b45309' },
+    { key: 'fire', label: 'Fire', color: '#991b1b' },
+    { key: 'shelters', label: 'Shelters', color: '#166534' },
 ];
 
 function getRiskColor(score) {
@@ -32,7 +32,7 @@ function getRiskColor(score) {
 }
 
 function getStatusColor(status) {
-    if (status === 'failed')   return COLORS.critical;
+    if (status === 'failed') return COLORS.critical;
     if (status === 'degraded') return COLORS.warning;
     return COLORS.healthy;
 }
@@ -64,8 +64,8 @@ function createCustomIcon(type, status) {
     return L.divIcon({
         html: `<div style="background-color:${color};border-radius:50%;padding:4px;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.5);width:24px;height:24px;display:flex;align-items:center;justify-content:center;">${svgIcon}</div>`,
         className: 'custom-infra-icon',
-        iconSize:    [24, 24],
-        iconAnchor:  [12, 12],
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
         popupAnchor: [0, -12],
     });
 }
@@ -75,7 +75,7 @@ function createClusterCustomIcon(cluster) {
     return L.divIcon({
         html: `<div style="background-color:#475569;color:white;display:flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700;font-family:Inter,system-ui;width:28px;height:28px;font-size:13px;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.5);">${count}</div>`,
         className: 'marker-cluster',
-        iconSize:   [28, 28],
+        iconSize: [28, 28],
         iconAnchor: [14, 14],
     });
 }
@@ -95,8 +95,8 @@ function createBlockedIcon() {
             line-height:1;
         ">✕</div>`,
         className: 'blocked-road-icon',
-        iconSize:    [18, 18],
-        iconAnchor:  [9, 9],
+        iconSize: [18, 18],
+        iconAnchor: [9, 9],
         popupAnchor: [0, -10],
     });
 }
@@ -109,10 +109,10 @@ function MapUpdater({ center, zoom, onZoomChange }) {
 }
 
 const DEPT_INFRA_MAP = {
-    medical:   ['hospital'],
-    fire:      ['fire_station'],
-    traffic:   ['road'],
-    power:     ['power_station'],
+    medical: ['hospital'],
+    fire: ['fire_station'],
+    traffic: ['road'],
+    power: ['power_station'],
     logistics: ['shelter'],
 };
 
@@ -121,38 +121,38 @@ function MapLegend() {
     const [expanded, setExpanded] = useState(true);
 
     const cardStyle = {
-        position:     'absolute',
-        bottom:       12,
-        left:         12,
-        zIndex:       1000,
-        maxWidth:     180,
-        background:   'rgba(15, 15, 20, 0.85)',
+        position: 'absolute',
+        bottom: 12,
+        left: 12,
+        zIndex: 1000,
+        maxWidth: 180,
+        background: 'rgba(15, 15, 20, 0.85)',
         backdropFilter: 'blur(8px)',
         borderRadius: 8,
-        border:       '1px solid rgba(255,255,255,0.08)',
-        padding:      10,
-        fontSize:     11,
-        boxShadow:    '0 4px 16px rgba(0,0,0,0.4)',
-        userSelect:   'none',
+        border: '1px solid rgba(255,255,255,0.08)',
+        padding: 10,
+        fontSize: 11,
+        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+        userSelect: 'none',
     };
 
     const sectionLabel = {
-        fontSize:      9,
-        fontWeight:    700,
+        fontSize: 9,
+        fontWeight: 700,
         letterSpacing: '0.07em',
         textTransform: 'uppercase',
-        color:         '#64748b',
-        marginBottom:  5,
-        marginTop:     8,
+        color: '#64748b',
+        marginBottom: 5,
+        marginTop: 8,
     };
 
     const row = {
-        display:       'flex',
-        alignItems:    'center',
-        gap:           7,
-        marginBottom:  3,
-        color:         '#cbd5e1',
-        lineHeight:    1.3,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 7,
+        marginBottom: 3,
+        color: '#cbd5e1',
+        lineHeight: 1.3,
     };
 
     const dot = (color) => ({
@@ -214,9 +214,9 @@ function MapLegend() {
                     {/* ── Risk Zones ── */}
                     <div style={{ ...sectionLabel, marginTop: 10 }}>Risk Zones</div>
                     <div style={row}><span style={square(COLORS.critical)} /><span>Critical &gt;70%</span></div>
-                    <div style={row}><span style={square(COLORS.warning)}  /><span>Warning 40–70%</span></div>
-                    <div style={row}><span style={square('#ca8a04')}        /><span>Moderate 15–40%</span></div>
-                    <div style={row}><span style={square(COLORS.healthy)}   /><span>Low &lt;15%</span></div>
+                    <div style={row}><span style={square(COLORS.warning)} /><span>Warning 40–70%</span></div>
+                    <div style={row}><span style={square('#ca8a04')} /><span>Moderate 15–40%</span></div>
+                    <div style={row}><span style={square(COLORS.healthy)} /><span>Low &lt;15%</span></div>
                 </>
             )}
         </div>
@@ -231,25 +231,25 @@ function PillButton({ label, accentColor, visible, onToggle }) {
 
     if (!visible) {
         // Toggled OFF — layer hidden
-        background     = 'transparent';
-        border         = '1px solid #475569';
-        color          = '#475569';
+        background = 'transparent';
+        border = '1px solid #475569';
+        color = '#475569';
         textDecoration = 'line-through';
-        boxShadow      = 'none';
+        boxShadow = 'none';
     } else if (hovered) {
         // Hovered while visible
-        background     = '#1e293b';
-        border         = `1px solid ${accentColor}`;
-        color          = '#ffffff';
+        background = '#1e293b';
+        border = `1px solid ${accentColor}`;
+        color = '#ffffff';
         textDecoration = 'none';
-        boxShadow      = `inset 3px 0 0 ${accentColor}`;
+        boxShadow = `inset 3px 0 0 ${accentColor}`;
     } else {
         // Default — visible, not hovered
-        background     = '#1e293b';
-        border         = '1px solid #334155';
-        color          = '#94a3b8';
+        background = '#1e293b';
+        border = '1px solid #334155';
+        color = '#94a3b8';
         textDecoration = 'none';
-        boxShadow      = 'none';
+        boxShadow = 'none';
     }
 
     return (
@@ -258,19 +258,19 @@ function PillButton({ label, accentColor, visible, onToggle }) {
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             style={{
-                padding:        '4px 12px',
-                borderRadius:   6,
-                fontSize:       13,
-                fontWeight:     500,
-                cursor:         'pointer',
-                transition:     'all 0.15s ease',
+                padding: '4px 12px',
+                borderRadius: 6,
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
                 border,
                 background,
                 color,
                 textDecoration,
                 boxShadow,
-                letterSpacing:  '0.02em',
-                lineHeight:     1.4,
+                letterSpacing: '0.02em',
+                lineHeight: 1.4,
             }}
         >
             {label}
@@ -282,15 +282,15 @@ function PillButton({ label, accentColor, visible, onToggle }) {
 function LayerFilterBar({ visibleLayers, onToggle, theme }) {
     return (
         <div style={{
-            display:        'flex',
-            alignItems:     'center',
-            gap:            5,
-            padding:        '5px 8px',
-            background:     theme === 'light' ? 'rgba(255,255,255,0.85)' : 'rgba(10,14,26,0.90)',
-            borderRadius:   8,
-            border:         theme === 'light' ? '1px solid rgba(0,0,0,0.08)' : '1px solid #1e293b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '5px 8px',
+            background: theme === 'light' ? 'rgba(255,255,255,0.85)' : 'rgba(10,14,26,0.90)',
+            borderRadius: 8,
+            border: theme === 'light' ? '1px solid rgba(0,0,0,0.08)' : '1px solid #1e293b',
             backdropFilter: 'blur(6px)',
-            flexWrap:       'wrap',
+            flexWrap: 'wrap',
         }}>
             <span style={{
                 fontSize: 10, fontWeight: 700,
@@ -318,17 +318,17 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
 
     const [visibleLayers, setVisibleLayers] = useState({
         hospitals: true,
-        roads:     true,
-        power:     true,
-        fire:      true,
-        shelters:  true,
+        roads: true,
+        power: true,
+        fire: true,
+        shelters: true,
     });
 
     const toggleLayer = (key) =>
         setVisibleLayers(prev => ({ ...prev, [key]: !prev[key] }));
 
     const { zones = [], infrastructure = [], roads = [], ml_output = null } = state || {};
-    const isPublic   = userRole === 'public';
+    const isPublic = userRole === 'public';
     const isOperator = userRole === 'operator';
 
     const visibleInfra = useMemo(() => {
@@ -336,21 +336,21 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
         return infrastructure;
     }, [infrastructure, isPublic]);
 
-    const hospitals     = useMemo(() => visibleInfra.filter(i => i.type === 'hospital'),      [visibleInfra]);
+    const hospitals = useMemo(() => visibleInfra.filter(i => i.type === 'hospital'), [visibleInfra]);
     const powerStations = useMemo(() => visibleInfra.filter(i => i.type === 'power_station'), [visibleInfra]);
-    const shelters      = useMemo(() => visibleInfra.filter(i => i.type === 'shelter'),        [visibleInfra]);
-    const fireStations  = useMemo(() => visibleInfra.filter(i => i.type === 'fire_station'),   [visibleInfra]);
-    const otherInfra    = useMemo(() => visibleInfra.filter(i =>
+    const shelters = useMemo(() => visibleInfra.filter(i => i.type === 'shelter'), [visibleInfra]);
+    const fireStations = useMemo(() => visibleInfra.filter(i => i.type === 'fire_station'), [visibleInfra]);
+    const otherInfra = useMemo(() => visibleInfra.filter(i =>
         !['hospital', 'power_station', 'shelter', 'fire_station'].includes(i.type)
     ), [visibleInfra]);
 
-    const showShelters   = currentZoom > 11;
+    const showShelters = currentZoom > 11;
     const showMinorInfra = currentZoom > 13;
 
     if (!state) return null;
 
-    const tileUrl    = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const popupBg    = theme === 'light' ? '#fff'    : '#141b2d';
+    const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const popupBg = theme === 'light' ? '#fff' : '#141b2d';
     const popupColor = theme === 'light' ? '#0f172a' : '#e2e8f0';
 
     return (
@@ -389,47 +389,82 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                                     key={zone.id}
                                     positions={zone.polygon}
                                     pathOptions={{
-                                        color:       getRiskColor(zone.risk_score),
-                                        fillColor:   getRiskColor(zone.risk_score),
+                                        color: getRiskColor(zone.risk_score),
+                                        fillColor: getRiskColor(zone.risk_score),
                                         fillOpacity: isHighRisk ? (theme === 'light' ? 0.22 : 0.18) : (theme === 'light' ? 0.1 : 0.07),
-                                        weight:      isHighRisk ? (theme === 'light' ? 2.5 : 2)    : (theme === 'light' ? 1.5 : 1),
-                                        opacity:     isHighRisk ? (theme === 'light' ? 0.9 : 0.8)  : (theme === 'light' ? 0.5 : 0.4),
+                                        weight: isHighRisk ? (theme === 'light' ? 2.5 : 2) : (theme === 'light' ? 1.5 : 1),
+                                        opacity: isHighRisk ? (theme === 'light' ? 0.9 : 0.8) : (theme === 'light' ? 0.5 : 0.4),
                                     }}
                                     eventHandlers={{ click: () => onZoneClick?.(zone) }}
                                 >
                                     <Popup>
-                                        <div style={{ color: popupColor, background: popupBg, padding: 2 }}>
-                                            <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 2 }}>{zone.name}</div>
+                                        <div style={{ color: popupColor, background: popupBg, padding: '4px 2px', minWidth: 200, maxWidth: 200 }}>
+                                            <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 8, paddingRight: 10 }}>{zone.name}</div>
                                             {isPublic ? (
-                                                <div style={{ fontSize: 11, color: getRiskColor(zone.risk_score), fontWeight: 600 }}>
+                                                <div style={{ fontSize: 12, color: getRiskColor(zone.risk_score), fontWeight: 700, padding: '6px 0' }}>
                                                     {zone.risk_score > 70 ? '⚠ CRITICAL ZONE' : zone.risk_score > 40 ? '⚠ ALERT ZONE' : '✓ SAFE ZONE'}
                                                 </div>
                                             ) : (
                                                 <>
-                                                    <div style={{ fontSize: 11 }}>
-                                                        Risk: <span style={{ color: getRiskColor(zone.risk_score), fontWeight: 600 }}>{zone.risk_score.toFixed(0)}%</span>
+                                                    <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                                                        <div style={{ flex: 1, padding: 6, background: 'rgba(255,255,255,0.03)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            <div style={{ fontSize: 9, color: 'var(--text-tertiary)', fontWeight: 700, letterSpacing: '0.05em' }}>RISK</div>
+                                                            <div style={{ fontSize: 16, fontWeight: 700, color: getRiskColor(zone.risk_score) }}>{zone.risk_score.toFixed(0)}%</div>
+                                                        </div>
+                                                        <div style={{ flex: 1, padding: 6, background: 'rgba(255,255,255,0.03)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                            <div style={{ fontSize: 9, color: 'var(--text-tertiary)', fontWeight: 700, letterSpacing: '0.05em' }}>POP</div>
+                                                            <div style={{ fontSize: 16, fontWeight: 600, color: popupColor }}>{(zone.population / 1000).toFixed(0)}k</div>
+                                                        </div>
                                                     </div>
-                                                    <div style={{ fontSize: 11, color: popupColor, opacity: 0.7 }}>Pop: {zone.population.toLocaleString()}</div>
+
+                                                    <div style={{ height: '0.5px', background: 'rgba(255,255,255,0.1)', marginBottom: 10 }} />
+
                                                     {mlPrediction && (
-                                                        <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(128,128,128,0.2)' }}>
-                                                            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--primary)', marginBottom: 2 }}>ML PREDICTIONS</div>
-                                                            <div style={{ fontSize: 10, display: 'flex', justifyContent: 'space-between' }}>
-                                                                <span>Casualties:</span>
-                                                                <span style={{ fontWeight: 600, color: '#ef4444' }}>{mlPrediction.predicted_casualties}</span>
+                                                        <div>
+                                                            <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                <span style={{ fontSize: 12, opacity: 0.8 }}>⚡</span> ML PREDICTIONS
                                                             </div>
-                                                            <div style={{ fontSize: 10, display: 'flex', justifyContent: 'space-between' }}>
-                                                                <span>Risk CI:</span>
-                                                                <span style={{ fontWeight: 600 }}>{mlPrediction.risk_confidence_low.toFixed(0)}% - {mlPrediction.risk_confidence_high.toFixed(0)}%</span>
+                                                            
+                                                            <div style={{ fontSize: 11, display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                                                                <span style={{ color: 'var(--text-secondary)' }}>Casualties:</span>
+                                                                <span style={{ fontWeight: 600, color: mlPrediction.predicted_casualties > 50 ? '#ef4444' : popupColor, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                                    {mlPrediction.predicted_casualties > 50 && <span>💀</span>}
+                                                                    {mlPrediction.predicted_casualties}
+                                                                </span>
                                                             </div>
-                                                            <div style={{ fontSize: 10, marginTop: 4, display: 'flex', gap: 6 }}>
-                                                                <div style={{ flex: 1, padding: 2, background: 'rgba(239,68,68,0.1)', borderRadius: 2, textAlign: 'center', color: '#ef4444', fontWeight: 600 }}>
-                                                                    {mlPrediction.ambulances_allocated} 🚑
+
+                                                            {/* 
+                                                                Risk CI (Confidence Interval) explanation:
+                                                                The CI represents the ML model's predicted statistical range for the risk score 
+                                                                (e.g., 71% - 92%). The point estimate (Risk: 70%) shown above comes directly 
+                                                                from the deterministic simulation physics. They can differ because the ML model 
+                                                                captures uncertainty and variance across its decision trees. 
+                                                            */}
+                                                            <div title="ML confidence interval — the model predicts risk will fall in this range" style={{ cursor: 'help', marginBottom: 12 }}>
+                                                                <div style={{ width: '100%', height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.1)', position: 'relative' }}>
+                                                                    <div style={{
+                                                                        position: 'absolute',
+                                                                        left: `${Math.max(0, mlPrediction.risk_confidence_low)}%`,
+                                                                        width: `${Math.max(0, Math.min(100, mlPrediction.risk_confidence_high) - Math.max(0, mlPrediction.risk_confidence_low))}%`,
+                                                                        height: '100%',
+                                                                        background: '#f59e0b',
+                                                                        borderRadius: 3
+                                                                    }} />
                                                                 </div>
-                                                                <div style={{ flex: 1, padding: 2, background: 'rgba(245,158,11,0.1)', borderRadius: 2, textAlign: 'center', color: '#f59e0b', fontWeight: 600 }}>
-                                                                    {mlPrediction.generators_allocated} ⚡
+                                                                <div style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                                                                    {mlPrediction.risk_confidence_low.toFixed(0)}% <span style={{ opacity: 0.5, letterSpacing: '-1px' }}>─────</span> {mlPrediction.risk_confidence_high.toFixed(0)}%
                                                                 </div>
-                                                                <div style={{ flex: 1, padding: 2, background: 'rgba(34,197,94,0.1)', borderRadius: 2, textAlign: 'center', color: '#22c55e', fontWeight: 600 }}>
-                                                                    {mlPrediction.shelter_buses_allocated} 🚌
+                                                            </div>
+
+                                                            <div style={{ fontSize: 10, display: 'flex', flexDirection: 'column', gap: 4, color: 'var(--text-secondary)' }}>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                                    <span style={{ fontSize: 12, width: 16, textAlign: 'center', opacity: 0.9 }}>🚑</span> {mlPrediction.ambulances_allocated} Ambulances
+                                                                </div>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                                    <span style={{ fontSize: 12, width: 16, textAlign: 'center', opacity: 0.9 }}>⚡</span> {mlPrediction.generators_allocated} Generators
+                                                                </div>
+                                                                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                                    <span style={{ fontSize: 12, width: 16, textAlign: 'center', opacity: 0.9 }}>🚌</span> {mlPrediction.shelter_buses_allocated} Shelter Buses
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -449,10 +484,10 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                                 center={zone.center}
                                 radius={Math.min(18, zone.risk_score / 5 + 3)}
                                 pathOptions={{
-                                    color:       getRiskColor(zone.risk_score),
-                                    fillColor:   getRiskColor(zone.risk_score),
+                                    color: getRiskColor(zone.risk_score),
+                                    fillColor: getRiskColor(zone.risk_score),
                                     fillOpacity: theme === 'light' ? zone.risk_score / 160 : zone.risk_score / 220,
-                                    weight:      zone.risk_score > 70 ? (theme === 'light' ? 2.5 : 2) : (theme === 'light' ? 1 : 0.5),
+                                    weight: zone.risk_score > 70 ? (theme === 'light' ? 2.5 : 2) : (theme === 'light' ? 1 : 0.5),
                                 }}
                             />
                         ))}
@@ -465,7 +500,7 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                                 if (!road.points || road.points.length < 2) return null;
 
                                 const midIdx = Math.floor(road.points.length / 2);
-                                const mid    = road.points[midIdx];
+                                const mid = road.points[midIdx];
 
                                 // ── BLOCKED ──────────────────────────────────────
                                 if (road.blocked || road.status === 'failed') {
@@ -474,9 +509,9 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                                             <Polyline
                                                 positions={road.points}
                                                 pathOptions={{
-                                                    color:     '#ef4444',
-                                                    weight:    5,
-                                                    opacity:   0.9,
+                                                    color: '#ef4444',
+                                                    weight: 5,
+                                                    opacity: 0.9,
                                                     dashArray: '10, 6',
                                                 }}
                                             >
@@ -505,9 +540,9 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                                             key={road.id}
                                             positions={road.points}
                                             pathOptions={{
-                                                color:     '#f59e0b',
-                                                weight:    3,
-                                                opacity:   0.7,
+                                                color: '#f59e0b',
+                                                weight: 3,
+                                                opacity: 0.7,
                                                 dashArray: '6, 4',
                                             }}
                                         >
@@ -529,8 +564,8 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                                             key={road.id}
                                             positions={road.points}
                                             pathOptions={{
-                                                color:   '#22c55e',
-                                                weight:  4,
+                                                color: '#22c55e',
+                                                weight: 4,
                                                 opacity: 0.9,
                                             }}
                                         >
