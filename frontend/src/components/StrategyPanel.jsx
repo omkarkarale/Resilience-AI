@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const STRATEGY_COLORS = {
     aggressive_evac: '#ef4444',
@@ -24,6 +24,7 @@ function MetricBar({ label, value, max = 100, color }) {
 
 function StrategyCard({ strategy, isRecommended, rank }) {
     const color = STRATEGY_COLORS[strategy.id] || '#64748b';
+    const [expanded, setExpanded] = useState(false);
 
     return (
         <div style={{
@@ -78,7 +79,7 @@ function StrategyCard({ strategy, isRecommended, rank }) {
             <div style={{ marginTop: 6 }}>
                 <div style={{ fontSize: 9, fontWeight: 600, color: 'var(--text-tertiary)', marginBottom: 3, letterSpacing: '0.04em' }}>ACTIONS</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {(strategy.actions || []).slice(0, 3).map((action, i) => (
+                    {(strategy.actions || []).slice(0, expanded ? undefined : 3).map((action, i) => (
                         <div key={i} style={{
                             fontSize: 10, color: 'var(--text-secondary)', lineHeight: 1.4,
                             paddingLeft: 8, borderLeft: `2px solid ${color}20`,
@@ -87,8 +88,11 @@ function StrategyCard({ strategy, isRecommended, rank }) {
                         </div>
                     ))}
                     {(strategy.actions || []).length > 3 && (
-                        <div style={{ fontSize: 9, color: 'var(--text-tertiary)', paddingLeft: 8 }}>
-                            +{strategy.actions.length - 3} more
+                        <div
+                            onClick={() => setExpanded(p => !p)}
+                            style={{ fontSize: 9, color, paddingLeft: 8, cursor: 'pointer', marginTop: 2, fontWeight: 600 }}
+                        >
+                            {expanded ? '▲ show less' : `▼ +${strategy.actions.length - 3} more`}
                         </div>
                     )}
                 </div>
