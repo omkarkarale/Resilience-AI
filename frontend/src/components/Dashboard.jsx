@@ -102,7 +102,7 @@ const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', use
             <div className="glass-card" style={{ padding: '14px 16px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                     <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-                        Assessment
+                        Simulation Analysis
                     </span>
                     <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>
                         T+{tick.toString().padStart(3, '0')}
@@ -170,7 +170,7 @@ const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', use
             {uniqueRecs.length > 0 && (
                 <div className="glass-card" style={{ padding: '14px 16px', position: 'relative' }}>
                     <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 8 }}>
-                        Priority Actions ({uniqueRecs.length})
+                        Recommended Interventions ({uniqueRecs.length})
                     </div>
                     <div
                         className="overflow-y-auto"
@@ -267,7 +267,7 @@ const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', use
             {/* District Risk Scores */}
             <div className="glass-card" style={{ padding: '14px 16px' }}>
                 <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 8 }}>
-                    District Risk
+                    Zone Vulnerability Analysis
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
                     {sortedZones.map(zone => (

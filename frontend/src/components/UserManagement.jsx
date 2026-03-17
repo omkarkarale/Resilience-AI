@@ -74,10 +74,10 @@ export default function UserManagement() {
         <div className="glass-card" style={{ padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-                    User Management ({users.length})
+                    Participant Management ({users.length})
                 </span>
                 <button onClick={() => setShowForm(!showForm)} className="btn-ghost" style={{ fontSize: 10, padding: '4px 10px' }}>
-                    {showForm ? 'Cancel' : '+ Add User'}
+                    {showForm ? 'Cancel' : '+ Add Participant'}
                 </button>
             </div>
 
@@ -124,7 +124,7 @@ export default function UserManagement() {
                     </div>
                     {error && <div style={{ marginBottom: 8, fontSize: 11, color: 'var(--danger)' }}>{error}</div>}
                     <button type="submit" disabled={submitting} className="btn-primary" style={{ width: '100%', fontSize: 12 }}>
-                        {submitting ? 'Creating…' : 'Create User'}
+                        {submitting ? 'Creating…' : 'Create Participant'}
                     </button>
                 </form>
             )}

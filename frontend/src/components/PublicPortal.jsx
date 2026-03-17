@@ -56,10 +56,10 @@ export default function PublicPortal() {
                     </div>
                     <div>
                         <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.03em' }}>
-                            <span style={{ color: '#22c55e' }}>PUBLIC</span> SAFETY PORTAL
+                            <span style={{ color: '#22c55e' }}>PUBLIC</span> LEARNING PORTAL
                         </div>
                         <div style={{ fontSize: 10, color: '#7a8599', fontWeight: 500 }}>
-                            Mumbai Metropolitan Region · Real-Time Safety Info
+                            Mumbai Metropolitan Region · Simulation Response Guide
                         </div>
                     </div>
                 </div>
@@ -140,23 +140,23 @@ export default function PublicPortal() {
                             padding: '16px 18px', borderRadius: 10,
                             background: 'rgba(15,20,32,0.65)', border: '1px solid rgba(255,255,255,0.06)',
                         }}>
-                            <div style={{ fontSize: 11, fontWeight: 600, color: '#7a8599', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 10 }}>
-                                🛡 EVACUATION GUIDANCE
+                             <div style={{ fontSize: 11, fontWeight: 600, color: '#7a8599', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 10 }}>
+                                🛡 SIMULATION RESPONSE GUIDE
                             </div>
                             <div style={{ fontSize: 12, color: '#e2e8f0', lineHeight: 1.6 }}>
                                 <div style={{ marginBottom: 8 }}>
-                                    <strong style={{ color: '#f59e0b' }}>If in a Critical Zone:</strong>
+                                    <strong style={{ color: '#f59e0b' }}>In High Vulnerability Zones:</strong>
                                     <ul style={{ margin: '4px 0 0 16px', fontSize: 12, color: '#cbd5e1' }}>
-                                        <li>Move to the nearest shelter immediately</li>
-                                        <li>Follow designated evacuation routes</li>
-                                        <li>Carry essential documents and medication</li>
+                                        <li>Identify nearest shelters on the learning map</li>
+                                        <li>Observe designated relay points for students</li>
+                                        <li>Follow the simulation protocol for relocation</li>
                                     </ul>
                                 </div>
                                 <div>
-                                    <strong style={{ color: '#22c55e' }}>If in a Safe Zone:</strong>
+                                    <strong style={{ color: '#22c55e' }}>In Low Vulnerability Zones:</strong>
                                     <ul style={{ margin: '4px 0 0 16px', fontSize: 12, color: '#cbd5e1' }}>
-                                        <li>Stay indoors and monitor updates</li>
-                                        <li>Keep emergency kit ready</li>
+                                        <li>Monitor real-time cascading event simulations</li>
+                                        <li>Study the impact of infrastructure failure</li>
                                     </ul>
                                 </div>
                             </div>
@@ -207,7 +207,7 @@ export default function PublicPortal() {
                             background: 'rgba(15,20,32,0.65)', border: '1px solid rgba(255,255,255,0.06)',
                         }}>
                             <div style={{ fontSize: 11, fontWeight: 600, color: '#7a8599', letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 10 }}>
-                                📢 PUBLIC ANNOUNCEMENTS
+                                📢 SIMULATION ANNOUNCEMENTS
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                 {announcements.length === 0 && (
@@ -267,7 +267,7 @@ export default function PublicPortal() {
                 borderTop: '1px solid rgba(255,255,255,0.04)',
                 fontSize: 10, color: '#4b5563', fontWeight: 500,
             }}>
-                Mumbai Disaster Management Authority · Public Safety Portal · Updated in real-time
+                Educational Simulation Platform · Learning Portal · Updated live per experiment
             </footer>
         </div>
     );

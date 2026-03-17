@@ -54,7 +54,7 @@ const StatusBar = React.memo(function StatusBar({ state, connected, userRole = '
                 fontSize: 11, color: 'var(--text-secondary)',
             }}>
                 <div className={`status-dot ${connected ? 'operational' : 'failed'}`} />
-                {connected ? 'Connected — Awaiting Simulation' : 'Offline — Reconnecting…'}
+                {connected ? 'Connected — Ready for Experiment' : 'Offline — Reconnecting…'}
             </div>
         );
     }
@@ -108,12 +108,12 @@ const StatusBar = React.memo(function StatusBar({ state, connected, userRole = '
                 </div>
                 <div style={{ width: 1, height: 24, background: 'var(--border)' }} />
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Risk</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Vulnerability</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: riskColor, fontVariantNumeric: 'tabular-nums' }}>{overall_risk.toFixed(0)}%</div>
                 </div>
                 <div style={{ width: 1, height: 24, background: 'var(--border)' }} />
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Pop.</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Sim. Residents</div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{(totalPop / 1000000).toFixed(1)}M</div>
                 </div>
                 {blockedRoads > 0 && (
@@ -127,14 +127,14 @@ const StatusBar = React.memo(function StatusBar({ state, connected, userRole = '
                 )}
                 <div style={{ width: 1, height: 24, background: 'var(--border)' }} />
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Exposed</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>High Vulnerability</div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#ef4444' }}>
                         {city_summary?.total_exposed ? (city_summary.total_exposed / 1000).toFixed(1) : '0.0'}k
                     </div>
                 </div>
                 <div style={{ width: 1, height: 24, background: 'var(--border)' }} />
                 <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Evac.</div>
+                    <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500 }}>Relocating</div>
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#f59e0b' }}>
                         {city_summary?.total_evacuating ? (city_summary.total_evacuating / 1000).toFixed(1) : '0.0'}k
                     </div>

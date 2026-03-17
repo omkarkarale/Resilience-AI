@@ -4,19 +4,19 @@ import { useAuth } from '../context/AuthContext';
 
 /* ── Role config ──────────────────────────────────────────────── */
 const ROLE_BADGES = {
-    Admin:        'COMMANDER',
-    'Medical Op': 'MEDICAL',
-    'Traffic Op': 'TRAFFIC',
-    'Fire Op':    'FIRE',
-    'Power Op':   'POWER',
+    Admin:           'INSTRUCTOR',
+    'Medical Learner': 'MEDICAL',
+    'Traffic Learner': 'TRAFFIC',
+    'Fire Learner':    'FIRE',
+    'Power Learner':   'POWER',
 };
 
 const DEMO_ACCOUNTS = [
-    { label: 'Admin', email: 'admin@resilience.ai', password: 'admin123', desc: 'Full command center access' },
-    { label: 'Medical Op', email: 'medical@resilience.ai', password: 'operator123', desc: 'Hospital & ambulance ops' },
-    { label: 'Traffic Op', email: 'traffic@resilience.ai', password: 'operator123', desc: 'Road & transport ops' },
-    { label: 'Fire Op', email: 'fire@resilience.ai', password: 'operator123', desc: 'Fire response ops' },
-    { label: 'Power Op', email: 'power@resilience.ai', password: 'operator123', desc: 'Grid & power ops' },
+    { label: 'Admin', email: 'admin@resilience.ai', password: 'admin123', desc: 'Instructor — full platform access' },
+    { label: 'Medical Learner', email: 'medical@resilience.ai', password: 'operator123', desc: 'Hospital & health systems module' },
+    { label: 'Traffic Learner', email: 'traffic@resilience.ai', password: 'operator123', desc: 'Road & transport module' },
+    { label: 'Fire Learner', email: 'fire@resilience.ai', password: 'operator123', desc: 'Fire response module' },
+    { label: 'Power Learner', email: 'power@resilience.ai', password: 'operator123', desc: 'Grid & power systems module' },
 ];
 
 /* ── CSS-only animations (injected once) ──────────────────────── */
@@ -146,7 +146,7 @@ export default function LoginPage() {
                             fontSize: 10, color: '#475569', marginTop: 6,
                             fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase',
                         }}>
-                            AUTHORIZED PERSONNEL ONLY &nbsp;·&nbsp; SECURE ACCESS
+                            EDUCATIONAL SIMULATION PLATFORM &nbsp;·&nbsp; SECURE ACCESS
                         </div>
                         <div style={{
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -159,7 +159,7 @@ export default function LoginPage() {
                                 display: 'inline-block',
                             }} />
                             <span style={{ fontSize: 10, color: '#64748b', fontWeight: 600, letterSpacing: '0.08em' }}>
-                                SYSTEM ACTIVE
+                                PLATFORM ACTIVE
                             </span>
                         </div>
                     </div>
@@ -203,7 +203,7 @@ export default function LoginPage() {
                                         value={email}
                                         onChange={e => setEmail(e.target.value)}
                                         required
-                                        placeholder="operator@resilience.ai"
+                                        placeholder="learner@resilience.ai"
                                         style={{
                                             width: '100%', padding: '10px 14px',
                                             background: '#0a0f14',
@@ -283,7 +283,7 @@ export default function LoginPage() {
                                         }
                                     }}
                                 >
-                                    {loading ? 'Authenticating…' : 'AUTHENTICATE'}
+                                    {loading ? 'Signing In…' : 'SIGN IN'}
                                 </button>
                             </form>
                         </div>
@@ -300,7 +300,7 @@ export default function LoginPage() {
                             fontSize: 10, fontWeight: 600, color: '#64748b',
                             letterSpacing: '0.06em', textTransform: 'uppercase',
                             marginBottom: 10,
-                        }}>⚡ DEMO CREDENTIALS — SELECT ROLE</div>
+                        }}>🎓 DEMO ACCOUNTS — SELECT YOUR ROLE</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             {DEMO_ACCOUNTS.map(acc => {
                                 const badge = ROLE_BADGES[acc.label] || '';
@@ -361,7 +361,7 @@ export default function LoginPage() {
                             onMouseEnter={e => e.target.style.color = '#94a3b8'}
                             onMouseLeave={e => e.target.style.color = '#475569'}
                         >
-                            Access Public Safety Portal →
+                            Access Public Learning Portal →
                         </a>
                     </div>
                 </div>

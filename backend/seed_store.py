@@ -34,11 +34,11 @@ def _now() -> str:
 # ─── Seed Users ───
 def _seed():
     seeds = [
-        ("Admin", "admin@resilience.ai", "admin123", UserRole.ADMIN, None),
-        ("Dr. Meera Shah", "medical@resilience.ai", "operator123", UserRole.OPERATOR, Department.MEDICAL),
-        ("Inspector Rao", "traffic@resilience.ai", "operator123", UserRole.OPERATOR, Department.TRAFFIC),
-        ("Chief Desai", "fire@resilience.ai", "operator123", UserRole.OPERATOR, Department.FIRE),
-        ("Ravi Kumar", "power@resilience.ai", "operator123", UserRole.OPERATOR, Department.POWER),
+        ("Dr. Aris (Instructor)", "admin@resilience.ai", "admin123", UserRole.ADMIN, None),
+        ("Anya Sharma (Medical Learner)", "medical@resilience.ai", "operator123", UserRole.OPERATOR, Department.MEDICAL),
+        ("Vikram Singh (Traffic Learner)", "traffic@resilience.ai", "operator123", UserRole.OPERATOR, Department.TRAFFIC),
+        ("Rohan Das (Fire Learner)", "fire@resilience.ai", "operator123", UserRole.OPERATOR, Department.FIRE),
+        ("Isha Gupta (Power Learner)", "power@resilience.ai", "operator123", UserRole.OPERATOR, Department.POWER),
     ]
     for name, email, pwd, role, dept in seeds:
         uid = _uid()
@@ -56,8 +56,8 @@ def _seed():
     # Seed a welcome announcement
     _announcements.append(AnnouncementOut(
         id=_uid(),
-        title="System Online",
-        body="Resilience AI Command Center is operational. All departments report status.",
+        title="Welcome to Resilience AI",
+        body="The educational simulation platform is now online. Learners, please select your scenario module to begin.",
         visibility=AnnouncementVisibility.PUBLIC,
         created_by="system",
         created_by_name="System",

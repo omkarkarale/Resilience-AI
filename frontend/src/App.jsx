@@ -24,11 +24,11 @@ const ALL_TABS = [
   { id: 'dashboard', label: 'Dashboard', roles: ['admin', 'operator'] },
   { id: 'strategy', label: 'Strategy', roles: ['admin'] },
   { id: 'whatif', label: 'What-If', roles: ['admin'] },
-  { id: 'agents', label: 'Agents', roles: ['admin'] },
-  { id: 'reports', label: 'Reports', roles: ['admin', 'operator'] },
-  { id: 'announcements', label: 'Announce', roles: ['admin', 'operator'] },
-  { id: 'logs', label: 'Logs', roles: ['admin'] },
-  { id: 'users', label: 'Users', roles: ['admin'] },
+  { id: 'agents', label: 'AI Models', roles: ['admin'] },
+  { id: 'reports', label: 'Observations', roles: ['admin', 'operator'] },
+  { id: 'announcements', label: 'Notices', roles: ['admin', 'operator'] },
+  { id: 'logs', label: 'Audit', roles: ['admin'] },
+  { id: 'users', label: 'Participants', roles: ['admin'] },
 ];
 
 const ROLE_COLORS = {
@@ -107,7 +107,7 @@ function CommandCenter() {
               RESILIENCE <span style={{ color: 'var(--primary)' }}>AI</span>
             </div>
             <div style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 500, letterSpacing: '0.02em' }}>
-              Crisis Simulation Engine
+              Educational Simulation Engine
             </div>
           </div>
         </div>
@@ -286,7 +286,7 @@ function CommandCenter() {
         fontWeight: 500,
         letterSpacing: '0.04em',
       }}>
-        RESILIENCE AI v2.0 · Mumbai Metropolitan Region · {userRole.toUpperCase()} ACCESS
+        RESILIENCE AI v2.0 · Educational Platform · {userRole.toUpperCase()} ACCESS
       </footer>
     </div>
   );

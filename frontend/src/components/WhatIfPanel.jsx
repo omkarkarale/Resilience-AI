@@ -416,7 +416,7 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
             <style>{STYLE}</style>
             
             <div className="whatif-header">
-                <div className="whatif-title">INTERVENTION CONTROLS</div>
+                <div className="whatif-title">SIMULATION INTERVENTIONS</div>
             </div>
 
             <div className="whatif-body">
@@ -446,7 +446,7 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
 
                 {/* ── AMOUNT CONTROLS ── */}
                 <div>
-                    <div className="section-label">DEPLOY UNITS</div>
+                    <div className="section-label">ALLOCATE RESOURCES</div>
                     <div className="stepper-container">
                         <button 
                             className="stepper-btn" 

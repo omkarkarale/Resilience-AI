@@ -59,11 +59,11 @@ export default function DisasterControls({ onStart, onStop, onReset, running, lo
                     className="btn-primary"
                     style={{ width: '100%', padding: '9px 18px', fontSize: 12 }}
                 >
-                    {loading ? 'Starting…' : 'Launch Simulation'}
+                    {loading ? 'Starting…' : 'Start Experiment'}
                 </button>
             ) : (
                 <button onClick={onStop} className="btn-primary danger" style={{ width: '100%' }}>
-                    Stop Simulation
+                    Stop Experiment
                 </button>
             )}
             <button onClick={onReset} disabled={loading} className="btn-ghost" style={{ width: '100%' }}>
@@ -142,7 +142,7 @@ export default function DisasterControls({ onStart, onStop, onReset, running, lo
                 /* ── Expanded: full panel ── */
                 <>
                     <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 12 }}>
-                        Disaster Control
+                        Simulation Parameters
                     </div>
 
                     {/* Event Type — segmented control */}
@@ -171,7 +171,7 @@ export default function DisasterControls({ onStart, onStop, onReset, running, lo
 
                     {/* Zone */}
                     <div style={{ marginBottom: 12 }}>
-                        <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>Epicenter</div>
+                        <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>Scenario Origin</div>
                         <select
                             value={selectedZone}
                             onChange={e => setSelectedZone(e.target.value)}

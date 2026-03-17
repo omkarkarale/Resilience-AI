@@ -19,7 +19,7 @@ export default function AgentLog({ logs = [] }) {
     return (
         <div className="glass-card" style={{ padding: '14px 16px', maxHeight: 400, display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 8 }}>
-                Agent Activity
+                Model Activity
             </div>
 
             <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', maxHeight: 340 }}>
@@ -37,7 +37,7 @@ export default function AgentLog({ logs = [] }) {
                         }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ fontSize: 10, fontWeight: 600, color: AGENT_COLORS[log.agent] || 'var(--text-secondary)' }}>
-                                    {log.agent?.replace(' Agent', '')}
+                                    {log.agent?.replace(' Agent', ' Model')}
                                 </span>
                                 <span style={{ fontSize: 9, color: 'var(--text-tertiary)', fontVariantNumeric: 'tabular-nums' }}>T{log.tick || '-'}</span>
                             </div>

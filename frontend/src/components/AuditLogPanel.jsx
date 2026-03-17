@@ -24,10 +24,10 @@ export default function AuditLogPanel() {
     const getActionColor = (action, success) => {
         if (!success) return '#ef4444';
         if (action.includes('login')) return '#22c55e';
-        if (action.includes('simulation')) return '#3b82f6';
-        if (action.includes('report')) return '#8b5cf6';
-        if (action.includes('announcement')) return '#f59e0b';
-        if (action.includes('user')) return '#6366f1';
+        if (action.includes('experiment')) return '#3b82f6';
+        if (action.includes('observation')) return '#8b5cf6';
+        if (action.includes('notice')) return '#f59e0b';
+        if (action.includes('participant')) return '#6366f1';
         return '#7a8599';
     };
 

@@ -80,7 +80,7 @@ export default function FieldReports() {
         <div className="glass-card" style={{ padding: '14px 16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-                    Field Reports ({reports.length})
+                    Scenario Observations ({reports.length})
                 </span>
                 {!isAdmin && (
                     <button
@@ -88,7 +88,7 @@ export default function FieldReports() {
                         className="btn-ghost"
                         style={{ fontSize: 10, padding: '4px 10px' }}
                     >
-                        {showForm ? 'Cancel' : '+ New Report'}
+                        {showForm ? 'Cancel' : '+ New Observation'}
                     </button>
                 )}
             </div>
@@ -112,7 +112,7 @@ export default function FieldReports() {
                         </select>
                     </div>
                     <div style={{ marginBottom: 8 }}>
-                        <label style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Report Type</label>
+                        <label style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Observation Category</label>
                         <select value={reportType} onChange={e => setReportType(e.target.value)} style={{
                             width: '100%', padding: '6px 10px', borderRadius: 6, fontSize: 12,
                             background: 'var(--bg-surface-raised)', border: '1px solid var(--border)',
@@ -125,7 +125,7 @@ export default function FieldReports() {
                         <label style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>Description</label>
                         <textarea
                             value={description} onChange={e => setDescription(e.target.value)}
-                            required rows={3} placeholder="Describe the situation..."
+                            required rows={3} placeholder="Note down simulation behavior..."
                             style={{
                                 width: '100%', padding: '6px 10px', borderRadius: 6, fontSize: 12,
                                 background: 'var(--bg-surface-raised)', border: '1px solid var(--border)',
@@ -138,7 +138,7 @@ export default function FieldReports() {
                         <div style={{ marginBottom: 8, fontSize: 11, color: 'var(--danger)' }}>{error}</div>
                     )}
                     <button type="submit" disabled={submitting} className="btn-primary" style={{ width: '100%', fontSize: 12 }}>
-                        {submitting ? 'Submitting…' : 'Submit Report'}
+                        {submitting ? 'Submitting…' : 'Record Observation'}
                     </button>
                 </form>
             )}
@@ -147,7 +147,7 @@ export default function FieldReports() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 400, overflowY: 'auto' }}>
                 {reports.length === 0 && (
                     <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic', padding: '8px 0' }}>
-                        No field reports yet
+                        No scenario observations yet
                     </div>
                 )}
                 {reports.map(r => {
