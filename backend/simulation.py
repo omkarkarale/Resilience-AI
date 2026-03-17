@@ -16,6 +16,7 @@ from risk_engine import compute_all_risks  # pyre-ignore[21]
 from population_sim import compute_population_metrics, get_city_summary  # pyre-ignore[21]
 from resource_optimizer import get_all_allocations  # pyre-ignore[21]
 from strategy_ranker import rank_strategies  # pyre-ignore[21]
+import ml_engine
 
 def build_mumbai():
     """Build a realistic Mumbai layout centered around lat 19.0760, lng 72.8777."""
@@ -297,6 +298,7 @@ class SimulationEngine:
         self.recommended_strategy_id = None
         self.city_summary = {}
         self.risk_breakdowns = {}
+        self.ml_output = None   # MLOutput from ml_engine
 
     def start(self, disaster: DisasterEvent):
         """Start a simulation with the given disaster event."""
@@ -327,6 +329,7 @@ class SimulationEngine:
         self.strategies = []
         self.recommended_strategy_id = None
         self.city_summary = {}
+        self.ml_output = None
 
         # Rebuild graph with fresh edge weights
         self.graph_nodes, self.graph_edges, self.adj = build_city_graph(
@@ -407,6 +410,15 @@ class SimulationEngine:
         self.strategies, self.recommended_strategy_id = rank_strategies(
             self.zones, self.infrastructure, self.roads, self.disaster
         )
+
+        # ── 12. ML Engine → predict risk/casualties + optimize resources ──
+        try:
+            self.ml_output = ml_engine.analyze(
+                self.zones, self.infrastructure, self.roads,
+                self.disaster, self.population_metrics
+            )
+        except Exception as e:
+            print(f"[ML] Engine error at tick {self.tick}: {e}")
 
         # Merge recommendations
         self.recommendations = weather_recs + traffic_recs + medical_recs + power_recs + logistics_recs + command_recs
@@ -517,6 +529,7 @@ class SimulationEngine:
             strategies=self.strategies,
             recommended_strategy_id=self.recommended_strategy_id,
             city_summary=self.city_summary,
+            ml_output=self.ml_output,
         )
 
     def get_timeline(self):

@@ -150,6 +150,25 @@ async def get_timeline():
     return engine.get_timeline()
 
 
+@app.get("/api/ml")
+async def get_ml_output():
+    """Get latest ML predictions and resource optimization from the ML engine."""
+    if engine.ml_output is None:
+        return {"status": "no_data", "message": "Start a simulation first."}
+    return engine.ml_output.dict()
+
+
+@app.get("/api/ml/zone/{zone_id}")
+async def get_ml_zone(zone_id: str):
+    """Get ML prediction for a specific zone."""
+    if engine.ml_output is None:
+        return {"status": "no_data"}
+    for pred in engine.ml_output.predictions:
+        if pred.zone_id == zone_id:
+            return pred.dict()
+    raise HTTPException(status_code=404, detail=f"Zone {zone_id} not found in ML output")
+
+
 @app.get("/api/strategies")
 async def get_strategies():
     """Get ranked response strategies for current state."""
