@@ -49,7 +49,18 @@ function PriorityCard({ rec }) {
     );
 }
 
-const Dashboard = React.memo(function Dashboard({ state }) {
+// Agent → department mapping for operator filtering
+const AGENT_DEPT_MAP = {
+    'Medical Agent': 'medical',
+    'Traffic Agent': 'traffic',
+    'Fire Agent': 'fire',
+    'Power Agent': 'power',
+    'Logistics Agent': 'logistics',
+    'Infrastructure Agent': null, // visible to all
+    'Emergency Agent': null,
+};
+
+const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', userDepartment = null }) {
     if (!state) return null;
 
     const { zones = [], recommendations = [], overall_risk = 0, tick = 0, disaster } = state;
@@ -57,6 +68,14 @@ const Dashboard = React.memo(function Dashboard({ state }) {
     const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 };
     const allRecs = recommendations
         .filter(r => r.action && r.reason)
+        .filter(r => {
+            // Operator sees only department-relevant recommendations
+            if (userRole === 'operator' && userDepartment) {
+                const agentDept = AGENT_DEPT_MAP[r.agent];
+                return agentDept === null || agentDept === undefined || agentDept === userDepartment;
+            }
+            return true;
+        })
         .sort((a, b) => {
             const uDiff = (urgencyOrder[a.urgency] ?? 4) - (urgencyOrder[b.urgency] ?? 4);
             return uDiff !== 0 ? uDiff : a.priority - b.priority;

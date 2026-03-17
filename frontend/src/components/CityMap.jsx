@@ -81,17 +81,40 @@ function MapUpdater({ center, zoom, onZoomChange }) {
     return null;
 }
 
-const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
+// Department → infrastructure type mapping for operator filtering
+const DEPT_INFRA_MAP = {
+    medical: ['hospital'],
+    fire: ['fire_station'],
+    traffic: ['road'],
+    power: ['power_station'],
+    logistics: ['shelter'],
+};
+
+const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'admin', userDepartment = null }) => {
     const [currentZoom, setCurrentZoom] = useState(ZOOM);
     const [legendOpen, setLegendOpen] = useState(false);
 
     const { zones = [], infrastructure = [], roads = [] } = state || {};
+    const isPublic = userRole === 'public';
+    const isOperator = userRole === 'operator';
 
-    // Only show critical infrastructure at default zoom, everything at higher zoom
-    const hospitals = useMemo(() => infrastructure.filter(i => i.type === 'hospital'), [infrastructure]);
-    const powerStations = useMemo(() => infrastructure.filter(i => i.type === 'power_station'), [infrastructure]);
-    const shelters = useMemo(() => infrastructure.filter(i => i.type === 'shelter'), [infrastructure]);
-    const otherInfra = useMemo(() => infrastructure.filter(i => !['hospital', 'power_station', 'shelter'].includes(i.type)), [infrastructure]);
+    // Filter infrastructure based on role
+    const visibleInfra = useMemo(() => {
+        if (isPublic) return infrastructure.filter(i => i.type === 'shelter');
+        return infrastructure;
+    }, [infrastructure, isPublic]);
+
+    const hospitals = useMemo(() => visibleInfra.filter(i => i.type === 'hospital'), [visibleInfra]);
+    const powerStations = useMemo(() => visibleInfra.filter(i => i.type === 'power_station'), [visibleInfra]);
+    const shelters = useMemo(() => visibleInfra.filter(i => i.type === 'shelter'), [visibleInfra]);
+    const otherInfra = useMemo(() => visibleInfra.filter(i => !['hospital', 'power_station', 'shelter'].includes(i.type)), [visibleInfra]);
+
+    // For operators, check if infra type matches their department
+    const isDeptRelevant = (type) => {
+        if (!isOperator || !userDepartment) return true;
+        const relevant = DEPT_INFRA_MAP[userDepartment] || [];
+        return relevant.includes(type);
+    };
 
     // Visibility thresholds — show less by default
     const showShelters = currentZoom > 11;
@@ -139,10 +162,18 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                                         <Popup>
                                             <div style={{ color: popupColor, background: popupBg, padding: 2 }}>
                                                 <div style={{ fontWeight: 600, fontSize: 12, marginBottom: 2 }}>{zone.name}</div>
-                                                <div style={{ fontSize: 11 }}>
-                                                    Risk: <span style={{ color: getRiskColor(zone.risk_score), fontWeight: 600 }}>{zone.risk_score.toFixed(0)}%</span>
-                                                </div>
-                                                <div style={{ fontSize: 11, color: popupColor, opacity: 0.7 }}>Pop: {zone.population.toLocaleString()}</div>
+                                                {isPublic ? (
+                                                    <div style={{ fontSize: 11, color: getRiskColor(zone.risk_score), fontWeight: 600 }}>
+                                                        {zone.risk_score > 70 ? '⚠ CRITICAL ZONE' : zone.risk_score > 40 ? '⚠ ALERT ZONE' : '✓ SAFE ZONE'}
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div style={{ fontSize: 11 }}>
+                                                            Risk: <span style={{ color: getRiskColor(zone.risk_score), fontWeight: 600 }}>{zone.risk_score.toFixed(0)}%</span>
+                                                        </div>
+                                                        <div style={{ fontSize: 11, color: popupColor, opacity: 0.7 }}>Pop: {zone.population.toLocaleString()}</div>
+                                                    </>
+                                                )}
                                             </div>
                                         </Popup>
                                     </Polygon>
@@ -166,7 +197,7 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                         </LayerGroup>
                     </Overlay>
 
-                    <Overlay checked name="Road Status">
+                    {!isPublic && <Overlay checked name="Road Status">
                         <LayerGroup>
                             {roads
                                 .filter(road => road.blocked || road.status === 'degraded')
@@ -199,9 +230,9 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                                     );
                                 })}
                         </LayerGroup>
-                    </Overlay>
+                    </Overlay>}
 
-                    <Overlay checked name="Hospitals">
+                    {!isPublic && <Overlay checked name="Hospitals">
                         <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterCustomIcon} showCoverageOnHover={false} maxClusterRadius={50}>
                             {hospitals.map(infra => (
                                 <Marker key={infra.id} position={[infra.lat, infra.lng]} icon={createCustomIcon(infra.type, infra.status)}>
@@ -215,9 +246,9 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                                 </Marker>
                             ))}
                         </MarkerClusterGroup>
-                    </Overlay>
+                    </Overlay>}
 
-                    <Overlay checked name="Power">
+                    {!isPublic && <Overlay checked name="Power">
                         <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterCustomIcon} showCoverageOnHover={false} maxClusterRadius={50}>
                             {powerStations.map(infra => (
                                 <Marker key={infra.id} position={[infra.lat, infra.lng]} icon={createCustomIcon(infra.type, infra.status)}>
@@ -231,9 +262,9 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                                 </Marker>
                             ))}
                         </MarkerClusterGroup>
-                    </Overlay>
+                    </Overlay>}
 
-                    {showShelters && (
+                    {(showShelters || isPublic) && (
                         <Overlay checked name="Shelters">
                             <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterCustomIcon} showCoverageOnHover={false} maxClusterRadius={50}>
                                 {shelters.map(infra => (
@@ -251,7 +282,7 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick }) => {
                         </Overlay>
                     )}
 
-                    {showMinorInfra && (
+                    {showMinorInfra && !isPublic && (
                         <Overlay checked name="Other">
                             <MarkerClusterGroup chunkedLoading iconCreateFunction={createClusterCustomIcon} showCoverageOnHover={false} maxClusterRadius={60}>
                                 {otherInfra.map(infra => (

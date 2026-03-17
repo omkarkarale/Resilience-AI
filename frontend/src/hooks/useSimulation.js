@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 const WS_URL = 'ws://127.0.0.1:8000/ws';
 const API_BASE = 'http://127.0.0.1:8000';
 
-export function useSimulation() {
+export function useSimulation(token = null) {
     const [state, setState] = useState(null);
     const [connected, setConnected] = useState(false);
     const [timeline, setTimeline] = useState([]);
@@ -97,9 +97,12 @@ export function useSimulation() {
         setError(null);
 
         try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
             const res = await fetch(`${API_BASE}/api/start`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     type: disasterType,
                     epicenter_zone: epicenterZone,
@@ -141,7 +144,9 @@ export function useSimulation() {
     const stopSimulation = async () => {
         console.log('[SIM] Stopping simulation...');
         try {
-            const res = await fetch(`${API_BASE}/api/stop`, { method: 'POST' });
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const res = await fetch(`${API_BASE}/api/stop`, { method: 'POST', headers });
             const result = await res.json();
             console.log('[SIM] Stop response:', result);
             // Immediately mark as not running — don't wait for WS
@@ -158,7 +163,9 @@ export function useSimulation() {
     const resetSimulation = async () => {
         console.log('[SIM] Resetting simulation...');
         try {
-            const res = await fetch(`${API_BASE}/api/reset`, { method: 'POST' });
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const res = await fetch(`${API_BASE}/api/reset`, { method: 'POST', headers });
             const result = await res.json();
             console.log('[SIM] Reset response:', result);
             // Clear all local state
@@ -177,9 +184,11 @@ export function useSimulation() {
 
     const runWhatIf = async (action, targetZone = null, amount = 1) => {
         try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
             const res = await fetch(`${API_BASE}/api/whatif`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     action: action,
                     target_zone: targetZone,

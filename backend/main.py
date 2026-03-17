@@ -1,10 +1,15 @@
 import asyncio
 import json
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional
 
 from models import DisasterEvent, WhatIfIntervention
 from simulation import SimulationEngine
+from auth import get_current_user, require_role, require_auth
+from rbac_models import UserRole, UserInDB
+from rbac_routes import router as rbac_router
+import seed_store as store
 
 app = FastAPI(title="Resilience AI", version="2.0.0")
 
@@ -15,6 +20,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount RBAC routes
+app.include_router(rbac_router)
 
 engine = SimulationEngine()
 active_connections: list[WebSocket] = []
@@ -59,23 +67,38 @@ async def get_city():
 
 
 @app.post("/api/start")
-async def start_simulation(event: DisasterEvent):
-    """Start a disaster simulation."""
+async def start_simulation(event: DisasterEvent,
+                            user: UserInDB = Depends(require_role(UserRole.ADMIN))):
+    """Start a disaster simulation. Admin only."""
     global simulation_task
     engine.start(event)
     if simulation_task and not simulation_task.done():
         simulation_task.cancel()
     simulation_task = asyncio.create_task(simulation_loop())
+
+    store.add_audit_log(
+        user_id=user.id, user_name=user.name, role=user.role.value,
+        department=user.department.value if user.department else None,
+        action="simulation_start", target=event.type.value, success=True,
+        detail=f"Zone: {event.epicenter_zone}, Intensity: {event.intensity}",
+    )
     return {"status": "started", "disaster": event.dict()}
 
 
 @app.post("/api/stop")
-async def stop_simulation():
-    """Stop the running simulation."""
+async def stop_simulation(user: UserInDB = Depends(require_role(UserRole.ADMIN))):
+    """Stop the running simulation. Admin only."""
     global simulation_task
     engine.running = False
     if simulation_task and not simulation_task.done():
         simulation_task.cancel()
+
+    store.add_audit_log(
+        user_id=user.id, user_name=user.name, role=user.role.value,
+        department=user.department.value if user.department else None,
+        action="simulation_stop", success=True,
+    )
+
     try:
         state = engine.get_state()
         await broadcast(state.dict())
@@ -85,14 +108,21 @@ async def stop_simulation():
 
 
 @app.post("/api/reset")
-async def reset_simulation():
-    """Fully reset the simulation engine to initial state."""
+async def reset_simulation(user: UserInDB = Depends(require_role(UserRole.ADMIN))):
+    """Fully reset the simulation engine to initial state. Admin only."""
     global simulation_task, engine
     engine.running = False
     if simulation_task and not simulation_task.done():
         simulation_task.cancel()
         simulation_task = None
     engine = SimulationEngine()
+
+    store.add_audit_log(
+        user_id=user.id, user_name=user.name, role=user.role.value,
+        department=user.department.value if user.department else None,
+        action="simulation_reset", success=True,
+    )
+
     try:
         state = engine.get_state()
         await broadcast(state.dict())
@@ -102,9 +132,15 @@ async def reset_simulation():
 
 
 @app.post("/api/whatif")
-async def what_if(intervention: WhatIfIntervention):
-    """Run a what-if scenario."""
+async def what_if(intervention: WhatIfIntervention,
+                   user: UserInDB = Depends(require_role(UserRole.ADMIN))):
+    """Run a what-if scenario. Admin only."""
     result = engine.run_whatif(intervention)
+    store.add_audit_log(
+        user_id=user.id, user_name=user.name, role=user.role.value,
+        department=user.department.value if user.department else None,
+        action="whatif_scenario", target=intervention.action, success=True,
+    )
     return result
 
 

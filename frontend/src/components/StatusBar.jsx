@@ -33,7 +33,16 @@ function InfraChip({ label, icon, metric, health }) {
     );
 }
 
-const StatusBar = React.memo(function StatusBar({ state, connected }) {
+// Department → infra types mapping
+const DEPT_INFRA = {
+    medical: ['hospital'],
+    fire: ['fire_station'],
+    traffic: [],
+    power: ['power_station'],
+    logistics: ['shelter'],
+};
+
+const StatusBar = React.memo(function StatusBar({ state, connected, userRole = 'admin', userDepartment = null }) {
     if (!state) {
         return (
             <div style={{
@@ -56,12 +65,21 @@ const StatusBar = React.memo(function StatusBar({ state, connected }) {
     const totalPop = zones.reduce((sum, z) => sum + (z.population || 0), 0);
     const riskColor = overall_risk > 60 ? 'var(--danger)' : overall_risk > 30 ? 'var(--warning)' : 'var(--success)';
 
-    const infraCards = INFRA_CATEGORIES.map(cat => {
-        const items = infrastructure.filter(i => i.type === cat.id);
-        const operational = items.filter(i => i.status === 'operational').length;
-        const health = items.length > 0 ? (operational / items.length) * 100 : 100;
-        return { ...cat, metric: items.length > 0 ? `${operational}/${items.length}` : '—', health };
-    });
+    const relevantInfraTypes = userRole === 'operator' && userDepartment ? DEPT_INFRA[userDepartment] || [] : null;
+
+    const infraCards = INFRA_CATEGORIES
+        .filter(cat => {
+            if (userRole === 'operator' && relevantInfraTypes && relevantInfraTypes.length > 0) {
+                return relevantInfraTypes.includes(cat.id);
+            }
+            return true;
+        })
+        .map(cat => {
+            const items = infrastructure.filter(i => i.type === cat.id);
+            const operational = items.filter(i => i.status === 'operational').length;
+            const health = items.length > 0 ? (operational / items.length) * 100 : 100;
+            return { ...cat, metric: items.length > 0 ? `${operational}/${items.length}` : '—', health };
+        });
 
     return (
         <div style={{
