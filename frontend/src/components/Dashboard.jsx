@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const URGENCY_CONFIG = {
     critical: { color: '#ef4444', bg: 'rgba(239,68,68,0.06)', label: 'CRITICAL', order: 0 },
@@ -61,6 +61,7 @@ const AGENT_DEPT_MAP = {
 };
 
 const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', userDepartment = null }) {
+    const [hasScrolled, setHasScrolled] = useState(false);
     if (!state) return null;
 
     const { zones = [], recommendations = [], overall_risk = 0, tick = 0, disaster } = state;
@@ -167,13 +168,48 @@ const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', use
 
             {/* Priority Actions */}
             {uniqueRecs.length > 0 && (
-                <div className="glass-card" style={{ padding: '14px 16px' }}>
+                <div className="glass-card" style={{ padding: '14px 16px', position: 'relative' }}>
                     <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 8 }}>
                         Priority Actions ({uniqueRecs.length})
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div
+                        className="overflow-y-auto"
+                        style={{
+                            maxHeight: 'calc(100vh - 400px)',
+                            overflowY: 'auto',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 4,
+                        }}
+                        onScroll={() => { if (!hasScrolled) setHasScrolled(true); }}
+                    >
                         {uniqueRecs.map((rec, i) => <PriorityCard key={i} rec={rec} />)}
                     </div>
+
+                    {/* Gradient fade at bottom */}
+                    <div style={{
+                        position: 'sticky',
+                        bottom: 0,
+                        height: 32,
+                        background: 'linear-gradient(to bottom, transparent, var(--bg-surface))',
+                        pointerEvents: 'none',
+                        marginTop: -32,
+                        borderRadius: '0 0 8px 8px',
+                    }} />
+
+                    {/* Scroll-for-more hint */}
+                    {!hasScrolled && uniqueRecs.length > 3 && (
+                        <div style={{
+                            textAlign: 'center',
+                            fontSize: 11,
+                            color: 'var(--text-tertiary)',
+                            marginTop: 4,
+                            fontWeight: 500,
+                            opacity: 0.7,
+                        }}>
+                            ↓ scroll for more
+                        </div>
+                    )}
                 </div>
             )}
 

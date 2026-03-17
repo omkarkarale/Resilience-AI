@@ -46,7 +46,7 @@ export default function CascadingFlow({ events = [] }) {
                                 <div style={{ fontWeight: 600, color: getNodeColor(event.source), whiteSpace: 'nowrap', fontSize: 10 }}>
                                     {event.source}
                                 </div>
-                                <div style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap', fontSize: 9, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: 9, whiteSpace: 'normal', maxWidth: 220, lineHeight: 1.3 }}>
                                     {event.description}
                                 </div>
                             </div>
