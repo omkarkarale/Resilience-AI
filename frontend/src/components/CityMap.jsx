@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, CircleMarker, Polygon, Popup, useMap, useMapEvents, LayerGroup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, CircleMarker, Polygon, Polyline, Popup, Tooltip, useMap, useMapEvents, LayerGroup } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -77,6 +77,27 @@ function createClusterCustomIcon(cluster) {
         className: 'marker-cluster',
         iconSize:   [28, 28],
         iconAnchor: [14, 14],
+    });
+}
+
+// ✕ icon for midpoint of blocked roads
+function createBlockedIcon() {
+    return L.divIcon({
+        html: `<div style="
+            background:#ef4444;
+            color:white;
+            border-radius:50%;
+            width:18px;height:18px;
+            display:flex;align-items:center;justify-content:center;
+            font-size:11px;font-weight:700;
+            border:2px solid white;
+            box-shadow:0 2px 6px rgba(0,0,0,0.55);
+            line-height:1;
+        ">✕</div>`,
+        className: 'blocked-road-icon',
+        iconSize:    [18, 18],
+        iconAnchor:  [9, 9],
+        popupAnchor: [0, -10],
     });
 }
 
@@ -438,35 +459,92 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                     </LayerGroup>
 
                     {/* ── Roads — gated by pill toggle ── */}
-                    {!isPublic && visibleLayers.roads && (
+                    {!isPublic && visibleLayers.roads && Array.isArray(roads) && roads.length > 0 && (
                         <LayerGroup>
-                            {roads
-                                .filter(road => road.blocked || road.status === 'degraded')
-                                .map(road => {
-                                    const mid   = road.points[Math.floor(road.points.length / 2)];
-                                    const color = road.blocked ? COLORS.critical : COLORS.warning;
+                            {roads.map(road => {
+                                if (!road.points || road.points.length < 2) return null;
+
+                                const midIdx = Math.floor(road.points.length / 2);
+                                const mid    = road.points[midIdx];
+
+                                // ── BLOCKED ──────────────────────────────────────
+                                if (road.blocked || road.status === 'failed') {
                                     return (
-                                        <CircleMarker
+                                        <LayerGroup key={road.id}>
+                                            <Polyline
+                                                positions={road.points}
+                                                pathOptions={{
+                                                    color:     '#ef4444',
+                                                    weight:    5,
+                                                    opacity:   0.9,
+                                                    dashArray: '10, 6',
+                                                }}
+                                            >
+                                                <Tooltip sticky>
+                                                    <span style={{ fontWeight: 700 }}>{road.name}</span>
+                                                    <br />
+                                                    <span style={{ color: '#ef4444' }}>BLOCKED — road impassable</span>
+                                                </Tooltip>
+                                            </Polyline>
+                                            {/* ✕ midpoint marker — visible on zoom‑out */}
+                                            <Marker position={mid} icon={createBlockedIcon()}>
+                                                <Tooltip>
+                                                    <span style={{ fontWeight: 700 }}>{road.name}</span>
+                                                    {' — '}
+                                                    <span style={{ color: '#ef4444' }}>BLOCKED</span>
+                                                </Tooltip>
+                                            </Marker>
+                                        </LayerGroup>
+                                    );
+                                }
+
+                                // ── COMPROMISED / DEGRADED ────────────────────────
+                                if (road.status === 'degraded') {
+                                    return (
+                                        <Polyline
                                             key={road.id}
-                                            center={mid}
-                                            radius={road.blocked ? 8 : 6}
+                                            positions={road.points}
                                             pathOptions={{
-                                                color, fillColor: color,
-                                                fillOpacity: theme === 'light' ? 0.7 : 0.6,
-                                                weight: 2, opacity: 0.9,
+                                                color:     '#f59e0b',
+                                                weight:    3,
+                                                opacity:   0.7,
+                                                dashArray: '6, 4',
                                             }}
                                         >
-                                            <Popup>
-                                                <div style={{ color: popupColor, background: popupBg }}>
-                                                    <div style={{ fontWeight: 600, fontSize: 12 }}>{road.name}</div>
-                                                    <div style={{ fontSize: 11, color, fontWeight: 600 }}>
-                                                        {road.blocked ? '⛔ BLOCKED' : '⚠ DEGRADED'}
-                                                    </div>
-                                                </div>
-                                            </Popup>
-                                        </CircleMarker>
+                                            <Tooltip sticky>
+                                                <span style={{ fontWeight: 700 }}>{road.name}</span>
+                                                <br />
+                                                <span style={{ color: '#f59e0b' }}>COMPROMISED — reduced capacity</span>
+                                            </Tooltip>
+                                        </Polyline>
                                     );
-                                })}
+                                }
+
+                                // ── EMERGENCY LANE (operational) ──────────────────
+                                // Only render operational roads as emergency lanes when
+                                // a disaster is active (damage > 0 means sim is running)
+                                if (road.status === 'operational' && road.damage > 0) {
+                                    return (
+                                        <Polyline
+                                            key={road.id}
+                                            positions={road.points}
+                                            pathOptions={{
+                                                color:   '#22c55e',
+                                                weight:  4,
+                                                opacity: 0.9,
+                                            }}
+                                        >
+                                            <Tooltip sticky>
+                                                <span style={{ fontWeight: 700, color: '#22c55e' }}>EMERGENCY LANE</span>
+                                                <br />
+                                                <span>{road.name} — clear route</span>
+                                            </Tooltip>
+                                        </Polyline>
+                                    );
+                                }
+
+                                return null;
+                            })}
                         </LayerGroup>
                     )}
 
