@@ -4,3 +4,7 @@ websockets
 pydantic
 passlib[bcrypt]
 python-jose[cryptography]
+
+scikit-learn
+numpy
+ortools

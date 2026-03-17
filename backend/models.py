@@ -169,6 +169,32 @@ class Strategy(BaseModel):
     resource_cost: float = 0.0      # normalized cost 0-100
 
 
+class ZoneMLPrediction(BaseModel):
+    """ML prediction output for a single zone."""
+    zone_id: str
+    zone_name: str
+    predicted_risk: float           # 0-100
+    predicted_casualties: int
+    risk_confidence_low: float      # 95% CI lower bound
+    risk_confidence_high: float     # 95% CI upper bound
+    feature_importances: dict       # top contributing features (explainability)
+    ambulances_allocated: int
+    generators_allocated: int
+    shelter_buses_allocated: int
+
+
+class MLOutput(BaseModel):
+    """Aggregated ML + OR-Tools optimization results for the current tick."""
+    predictions: list[ZoneMLPrediction] = []
+    model_accuracy_r2: float = 0.0       # risk model R²
+    casualty_model_r2: float = 0.0       # casualty model R²
+    total_ambulances_deployed: int = 0
+    total_generators_deployed: int = 0
+    total_shelter_buses_deployed: int = 0
+    optimization_status: str = "not_run"
+    ml_summary: dict = {}
+
+
 class SimulationState(BaseModel):
     tick: int = 0
     running: bool = False
@@ -187,3 +213,5 @@ class SimulationState(BaseModel):
     strategies: list[Strategy] = []
     recommended_strategy_id: Optional[str] = None
     city_summary: dict = {}
+    # ML Engine output — predictions + OR-Tools allocation
+    ml_output: Optional[MLOutput] = None
