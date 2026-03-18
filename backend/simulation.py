@@ -661,21 +661,23 @@ class SimulationEngine:
             ))
             step += 1
 
+        # Use 85% capacity as the critical threshold for the cascade to prevent random jitter from dropping the chain
         overloaded = [i for i in self.infrastructure
-                      if i.type == InfrastructureType.HOSPITAL and i.current_load > i.capacity]
+                      if i.type == InfrastructureType.HOSPITAL and i.current_load > i.capacity * 0.85]
         if overloaded:
             events.append(CascadingEvent(
                 step=step,
                 source="Emergency Response" if blocked_roads else "Casualty Surge",
                 target="Hospital System",
-                description=f"{len(overloaded)} hospital(s) over capacity",
+                description=f"{len(overloaded)} hospital(s) near or over capacity",
                 icon="🏥"
             ))
             step += 1
 
         failed_stations = [i for i in self.infrastructure
                            if i.type == InfrastructureType.POWER_STATION and i.status == InfraStatus.FAILED]
-        if failed_stations or (overloaded and self.agents["power"].state.get("grid_stress", 0) > 60):
+        # Lower grid stress threshold to 40% so the cascade doesn't repeatedly flash on and off
+        if failed_stations or (overloaded and self.agents["power"].state.get("grid_stress", 0) > 40):
             events.append(CascadingEvent(
                 step=step,
                 source="Hospital Overload" if overloaded else "Infrastructure Damage",
