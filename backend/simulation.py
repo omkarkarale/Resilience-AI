@@ -623,7 +623,7 @@ class SimulationEngine:
             self.agent_logs = self.agent_logs[-50:]  # pyre-ignore[6]
 
         # Build cascading events
-        self.cascading_events = self._compute_cascading_events()
+        self._compute_cascading_events()
 
         state = self.get_state()
         self.timeline.append(state.dict())
@@ -632,72 +632,86 @@ class SimulationEngine:
 
         return state
 
-    def _compute_cascading_events(self) -> list[CascadingEvent]:
-        """Determine the cascading failure chain."""
-        events = []
-        step = 1
-
+    def _compute_cascading_events(self):
+        """Build the cascading failure chain iteratively over time."""
         disaster = self.disaster
         if not disaster:
-            return events
+            return
+
+        existing_pairs = {(e.source, e.target) for e in self.cascading_events}
+
+        def add_event(source, target, description, icon, tick_override=None):
+            if (source, target) not in existing_pairs:
+                event_tick = tick_override if tick_override is not None else self.tick
+                self.cascading_events.append(CascadingEvent(
+                    step=len(self.cascading_events) + 1,
+                    source=source,
+                    target=target,
+                    description=description,
+                    icon=icon,
+                    tick=event_tick
+                ))
+                existing_pairs.add((source, target))
+
+        # Always record the initial disaster as the root at tick 1 (or current if just started)
+        add_event(
+            "Event",
+            disaster.type.value.title(),
+            f"{disaster.type.value.title()} disaster triggered in {disaster.epicenter_zone}",
+            "🚨",
+            tick_override=1 if self.tick >= 1 else None
+        )
 
         blocked_roads = [r for r in self.roads if r.blocked]
         if blocked_roads:
-            events.append(CascadingEvent(
-                step=step,
-                source=str(disaster.type).title(),
-                target="Road Network",
-                description=f"{len(blocked_roads)} road(s) blocked by {disaster.type}",
-                icon="🌊" if disaster.type == DisasterType.FLOOD else "🌍"
-            ))
-            step += 1
+            add_event(
+                disaster.type.value.title(),
+                "Road Network",
+                f"{len(blocked_roads)} road(s) blocked/closed",
+                "🚧"
+            )
+            add_event(
+                "Road Network",
+                "Emergency Response",
+                "Travel times increased due to route compromise",
+                "🚑"
+            )
 
-            events.append(CascadingEvent(
-                step=step,
-                source="Road Blockage",
-                target="Emergency Response",
-                description="Ambulance routes compromised – response time increased",
-                icon="🚧"
-            ))
-            step += 1
-
-        # Use 85% capacity as the critical threshold for the cascade to prevent random jitter from dropping the chain
+        # Hospital system pressure
         overloaded = [i for i in self.infrastructure
                       if i.type == InfrastructureType.HOSPITAL and i.current_load > i.capacity * 0.85]
         if overloaded:
-            events.append(CascadingEvent(
-                step=step,
-                source="Emergency Response" if blocked_roads else "Casualty Surge",
-                target="Hospital System",
-                description=f"{len(overloaded)} hospital(s) near or over capacity",
-                icon="🏥"
-            ))
-            step += 1
+            # Connect from Emergency Response if possible, otherwise Casualty Surge
+            source = "Emergency Response" if blocked_roads else "Casualty Surge"
+            add_event(
+                source,
+                "Hospital System",
+                f"{len(overloaded)} facilities nearing critical capacity",
+                "🏥"
+            )
 
+        # Power Grid pressure
+        grid_stress = self.agents["power"].state.get("grid_stress", 0)
         failed_stations = [i for i in self.infrastructure
                            if i.type == InfrastructureType.POWER_STATION and i.status == InfraStatus.FAILED]
-        # Lower grid stress threshold to 40% so the cascade doesn't repeatedly flash on and off
-        if failed_stations or (overloaded and self.agents["power"].state.get("grid_stress", 0) > 40):
-            events.append(CascadingEvent(
-                step=step,
-                source="Hospital Overload" if overloaded else "Infrastructure Damage",
-                target="Power Grid",
-                description=f"Grid stress at {self.agents['power'].state.get('grid_stress', 0):.0f}%"
-                            + (f", {len(failed_stations)} station(s) failed" if failed_stations else ""),
-                icon="⚡"
-            ))
-            step += 1
+        if failed_stations or (overloaded and grid_stress > 40):
+            source = "Hospital System" if overloaded else "Infrastructure Damage"
+            add_event(
+                source,
+                "Power Grid",
+                f"Grid stress at {grid_stress:.0f}% ({len(failed_stations)} failures)",
+                "⚡"
+            )
 
-        if blocked_roads and self.agents["logistics"].state.get("deliveries_pending", 0) > 0:
-            events.append(CascadingEvent(
-                step=step,
-                source="Road Blockage",
-                target="Supply Chain",
-                description="Supply deliveries delayed – shelters at risk",
-                icon="📦"
-            ))
-
-        return events
+        # Supply chain
+        pending_deliveries = self.agents["logistics"].state.get("deliveries_pending", 0)
+        if blocked_roads and pending_deliveries > 0:
+            add_event(
+                "Road Network",
+                "Supply Chain",
+                f"{pending_deliveries} logistic deliveries delayed",
+                "📦"
+            )
 
     def get_state(self) -> SimulationState:
         """Get current simulation state including decision-support data."""

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSimulation } from '../hooks/useSimulation';
 import { useTheme } from '../context/ThemeContext';
 import CityMap from './CityMap';
+import CascadingFlow from './CascadingFlow';
 import './PublicPortal.css';
 
 // ── Helpers ──
@@ -238,11 +239,14 @@ export default function PublicPortal() {
 
     // Story nodes derived from cascading events or fallback
     const storyNodes = useMemo(() => {
-        if (cascading.length >= 3) {
+        if (cascading.length > 0) {
             return [
-                { icon: '🌊', text: cascading[0]?.description || 'Disaster begins' },
-                { icon: '🚧', text: cascading[1]?.description || 'Infrastructure impacted' },
-                { icon: '🏠', text: cascading[2]?.description || 'Population affected' },
+                { icon: '🌪️', text: 'Hazard Start', tick: 1 },
+                ...cascading.map(e => ({
+                    icon: e.icon || '⚠️',
+                    text: e.target, // Show the target of the failure as the step
+                    tick: e.tick || 1
+                }))
             ];
         }
         const type = (disaster?.type || 'flood').toLowerCase();
@@ -252,13 +256,6 @@ export default function PublicPortal() {
                 { icon: '🌊', text: `Flood begins in ${zone}` },
                 { icon: '🚧', text: `${blockedRoads} roads cut off, hospitals isolated` },
                 { icon: '🏠', text: 'Evacuation routes overwhelmed' },
-            ];
-        }
-        if (type.includes('earthquake')) {
-            return [
-                { icon: '🏚️', text: `Tremor hits ${zone}` },
-                { icon: '🚧', text: 'Structures damaged, roads cracked' },
-                { icon: '🏥', text: 'Hospitals under pressure' },
             ];
         }
         return [
@@ -333,6 +330,13 @@ export default function PublicPortal() {
 
                 {/* Right Panel */}
                 <div className="lp-right-panel">
+                    {/* Cascade Failure Chain — Highly visible for learner */}
+                    {cascading.length > 0 && (
+                        <div style={{ marginBottom: 12 }}>
+                            <CascadingFlow events={cascading} />
+                        </div>
+                    )}
+
                     {/* Section A — Situation Brief */}
                     <div className="lp-brief">
                         <div className="lp-brief-label">SITUATION BRIEF</div>
@@ -379,7 +383,7 @@ export default function PublicPortal() {
 
                 {/* ── BOTTOM STRIP ── */}
                 <div className="lp-bottom-strip">
-                    <div className="lp-story-nodes">
+                    <div className="lp-story-nodes" style={{ justifyContent: cascading.length > 0 ? 'flex-start' : 'center', overflowX: 'auto', padding: '10px 20px' }}>
                         {storyNodes.map((node, i) => (
                             <React.Fragment key={i}>
                                 {i > 0 && (
@@ -389,7 +393,14 @@ export default function PublicPortal() {
                                     </div>
                                 )}
                                 <div className="lp-story-node">
-                                    <div className="lp-node-circle">{node.icon}</div>
+                                    <div className="lp-node-circle" style={{ position: 'relative', background: i < cascading.length + 1 ? 'rgba(6, 182, 212, 0.2)' : 'rgba(255,255,255,0.05)' }}>
+                                        {node.tick && (
+                                            <div style={{ position: 'absolute', top: -18, left: '50%', transform: 'translateX(-50%)', fontSize: '0.6rem', fontWeight: 700, color: '#06b6d4', opacity: 0.8 }}>
+                                                T{node.tick}
+                                            </div>
+                                        )}
+                                        {node.icon}
+                                    </div>
                                     <div className="lp-node-text">{node.text}</div>
                                 </div>
                             </React.Fragment>

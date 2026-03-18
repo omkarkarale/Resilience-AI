@@ -221,7 +221,7 @@ function CommandCenter() {
               <TimelineSlider timeline={timeline} viewingTick={viewingTick} onViewTick={viewTick} running={isRunning} theme={theme} />
             )}
 
-            {state?.cascading_events?.length > 0 && userRole === 'admin' && (
+            {state?.cascading_events?.length > 0 && (
               <CascadingFlow events={state.cascading_events} />
             )}
           </div>

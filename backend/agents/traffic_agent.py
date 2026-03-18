@@ -75,11 +75,7 @@ class TrafficAgent(BaseAgent):
 
         # Check hospital access
         hospitals = [i for i in infrastructure if i.type.value == "hospital"]
-<<<<<<< HEAD
-        compromised_hospitals = []
-=======
         hosp_blockages = []
->>>>>>> 1585900415ab262b4d043c348c976022046f8f4c
         for hosp in hospitals:
             nearby_blocked = sum(
                 1 for road in roads if road.blocked
@@ -87,33 +83,6 @@ class TrafficAgent(BaseAgent):
                 if ((point[0] - hosp.lat)**2 + (point[1] - hosp.lng)**2)**0.5 < 0.012
             )
             if nearby_blocked > 0:
-<<<<<<< HEAD
-                compromised_hospitals.append((hosp, nearby_blocked))
-
-        if compromised_hospitals:
-            compromised_hospitals.sort(key=lambda x: x[1], reverse=True)
-            hosp_names_list = [h.name for h, nb in compromised_hospitals[:2]]
-            hosp_names = " and ".join(hosp_names_list)
-            
-            total_compromised = len(compromised_hospitals)
-            if total_compromised > 2:
-                hosp_names += f" and {total_compromised - 2} others"
-            
-            total_blocked = sum(nb for h, nb in compromised_hospitals)
-            
-            recommendations.append(AgentRecommendation(
-                agent=self.name,
-                action=f"Open emergency lanes to {hosp_names} — access compromised",
-                reason=f"{total_blocked} access road(s) blocked near {total_compromised} hospital(s). Ambulances cannot reach facilities.",
-                affected_zone="Hospital Access Zones",
-                confidence=93,
-                urgency=UrgencyLevel.CRITICAL,
-                expected_impact=f"Emergency lane restoration reduces ambulance wait time by est. 18 minutes for {total_compromised} facilities.",
-                priority=1,
-            ))
-            for hosp, nb in compromised_hospitals:
-                self.log(f"🚑 Access to {hosp.name} compromised! ({nb} roads blocked)")
-=======
                 hosp_blockages.append((hosp, nearby_blocked))
 
         hosp_blockages.sort(key=lambda x: -x[1])
@@ -141,6 +110,5 @@ class TrafficAgent(BaseAgent):
                 target=hosp.id,
             ))
             self.log(f"🚑 Access to {hosp.name} compromised!")
->>>>>>> 1585900415ab262b4d043c348c976022046f8f4c
 
         return recommendations

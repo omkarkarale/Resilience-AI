@@ -103,6 +103,7 @@ class CascadingEvent(BaseModel):
     target: str
     description: str
     icon: str = "⚠️"
+    tick: int = 0
 
 
 class WhatIfIntervention(BaseModel):
