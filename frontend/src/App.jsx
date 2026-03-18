@@ -24,7 +24,7 @@ const ALL_TABS = [
   { id: 'dashboard', label: 'Dashboard', roles: ['admin', 'operator'] },
   { id: 'strategy', label: 'Strategy', roles: ['admin'] },
   { id: 'whatif', label: 'What-If', roles: ['admin'] },
-  { id: 'agents', label: 'AI Models', roles: ['admin'] },
+  { id: 'agents', label: 'Agent Logs', roles: ['admin'] },
   { id: 'reports', label: 'Observations', roles: ['admin', 'operator'] },
   { id: 'announcements', label: 'Notices', roles: ['admin', 'operator'] },
   { id: 'logs', label: 'Audit', roles: ['admin'] },
