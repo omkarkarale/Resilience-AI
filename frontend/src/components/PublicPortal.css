@@ -22,7 +22,7 @@
 
 /* ── TOP BAR ── */
 .lp-topbar {
-  height: 56px;
+  height: 68px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -101,12 +101,43 @@
 
 .lp-milestone-label {
   position: absolute;
-  top: 14px;
   transform: translateX(-50%);
-  font-size: 0.65rem;
-  color: rgba(255,255,255,0.35);
+  font-size: 0.62rem;
+  color: rgba(255,255,255,0.3);
   white-space: nowrap;
   font-family: 'IBM Plex Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s ease;
+}
+
+.lp-milestone-label.below {
+  top: 10px;
+}
+
+.lp-milestone-label.above {
+  bottom: 10px;
+  flex-direction: column-reverse;
+}
+
+.lp-milestone-label.passed {
+  color: #06b6d4;
+  text-shadow: 0 0 8px rgba(6, 182, 212, 0.3);
+}
+
+/* Vertical connector lines targeting the dot */
+.lp-milestone-label::before {
+  content: '';
+  width: 1px;
+  height: 6px;
+  background: rgba(255,255,255,0.15);
+  transition: all 0.3s ease;
+}
+
+.lp-milestone-label.passed::before {
+  background: #06b6d4;
 }
 
 /* Right side */
@@ -173,7 +204,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 56px - 64px);
+  height: calc(100vh - 68px - 64px);
   border-bottom: 1px solid rgba(255,255,255,0.06);
   overflow: hidden;
 }
@@ -466,11 +497,31 @@
   pointer-events: none;
 }
 
+.lp-options-container {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  max-height: 500px;
+  opacity: 1;
+}
+
+.lp-options-container.fade-out-shrink {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
 .lp-decision-result {
-  font-size: 0.78rem;
-  color: rgba(255,255,255,0.45);
   margin-top: 10px;
-  line-height: 1.4;
+}
+
+.animate-fade-in {
+  animation: decisionFadeIn 0.8s ease forwards;
+  opacity: 0;
+}
+
+@keyframes decisionFadeIn {
+  to { opacity: 1; }
 }
 
 /* ── BOTTOM STRIP (Story Timeline) ── */

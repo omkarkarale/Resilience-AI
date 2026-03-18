@@ -101,27 +101,27 @@ function DecisionSection({ tick, disaster }) {
 
         if (type.includes('flood') || type.includes('cyclone') || type.includes('tsunami')) {
             pool.push(
-                { question: 'Floodwaters are blocking 3 roads. What should responders prioritize?', choices: ['Redirect all ambulances to alternate routes', 'Deploy boats for doorstep evacuation', 'Focus resources on opening the main highway'] },
-                { question: 'A shelter is nearing 90% capacity. What is the best action?', choices: ['Open a new temporary shelter nearby', 'Redirect evacuees to a farther but emptier shelter', 'Expand the current shelter with emergency tents'] },
-                { question: 'Water levels are still rising. Should evacuations continue?', choices: ['Yes — every minute counts for trapped residents', 'Pause — wait for water to stabilize before risking more teams', 'Switch to aerial rescue for remaining zones'] },
+                { question: 'Floodwaters are blocking 3 roads. What should responders prioritize?', choices: ['Redirect all ambulances to alternate routes', 'Deploy boats for doorstep evacuation', 'Focus resources on opening the main highway'], optimalIndex: 0, reason: 'The AI optimization engine dynamically reroutes traffic to open alternate routes, avoiding unpredictable delays in clearing the main road.' },
+                { question: 'A shelter is nearing 90% capacity. What is the best action?', choices: ['Open a new temporary shelter nearby', 'Redirect evacuees to a farther but emptier shelter', 'Expand the current shelter with emergency tents'], optimalIndex: 1, reason: 'Redirecting to a farther shelter spreads the load and preserves resources for critical edge cases, per our ML load balancing.' },
+                { question: 'Water levels are still rising. Should evacuations continue?', choices: ['Yes — every minute counts for trapped residents', 'Pause — wait for water to stabilize before risking more teams', 'Switch to aerial rescue for remaining zones'], optimalIndex: 0, reason: 'Predictive models show water levels crossing safe thresholds within 2 hours. Immediate evacuation minimizes fatalities.' },
             );
         } else if (type.includes('earthquake')) {
             pool.push(
-                { question: 'Aftershocks have damaged a hospital wing. How should we respond?', choices: ['Move patients to the nearest stable shelter', 'Set up a field hospital in the parking area', 'Focus all repair crews on the damaged wing'] },
-                { question: 'A collapsed building may have survivors. How should teams be deployed?', choices: ['Send search-and-rescue immediately', 'Secure the perimeter first to prevent secondary collapses', 'Use drones to assess before committing teams'] },
-                { question: 'Roads are cracked and debris is blocking ambulances. What now?', choices: ['Clear the main corridor with heavy machinery', 'Reroute ambulances through residential streets', 'Use helicopters for critical patient transport'] },
+                { question: 'Aftershocks have damaged a hospital wing. How should we respond?', choices: ['Move patients to the nearest stable shelter', 'Set up a field hospital in the parking area', 'Focus all repair crews on the damaged wing'], optimalIndex: 1, reason: 'Field hospitals ensure continuity of care using existing hospital staff while avoiding risky transport across damaged roads.' },
+                { question: 'A collapsed building may have survivors. How should teams be deployed?', choices: ['Send search-and-rescue immediately', 'Secure the perimeter first to prevent secondary collapses', 'Use drones to assess before committing teams'], optimalIndex: 2, reason: 'Initial drone assessment identifies structural weak points and thermal signatures, minimizing risk to rescue crews.' },
+                { question: 'Roads are cracked and debris is blocking ambulances. What now?', choices: ['Clear the main corridor with heavy machinery', 'Reroute ambulances through residential streets', 'Use helicopters for critical patient transport'], optimalIndex: 0, reason: 'Clearing the main corridor provides the highest throughput for all emergency vehicles, solving the bottleneck globally.' },
             );
         } else if (type.includes('grid') || type.includes('power')) {
             pool.push(
-                { question: 'Power is down in 4 sectors. How should generators be allocated?', choices: ['Hospitals and medical facilities first', 'Distribute evenly across all affected areas', 'Focus on the water pumping station to prevent flooding'] },
-                { question: 'Backup generators have 6 hours of fuel left. What is the priority?', choices: ['Ration power to extend coverage to 12 hours', 'Run at full capacity for hospitals only', 'Use remaining power to restore the main grid connection'] },
-                { question: 'Communication towers are down. How should coordination happen?', choices: ['Deploy runners between zones', 'Set up temporary radio relay stations', 'Prioritize restoring one tower for emergency broadcasts'] },
+                { question: 'Power is down in 4 sectors. How should generators be allocated?', choices: ['Hospitals and medical facilities first', 'Distribute evenly across all affected areas', 'Focus on the water pumping station to prevent flooding'], optimalIndex: 0, reason: 'Hospitals have critical life-support systems. AI prioritization always ranks critical medical infrastructure first.' },
+                { question: 'Backup generators have 6 hours of fuel left. What is the priority?', choices: ['Ration power to extend coverage to 12 hours', 'Run at full capacity for hospitals only', 'Use remaining power to restore the main grid connection'], optimalIndex: 1, reason: 'Running at full capacity for hospitals ensures no loss of life due to equipment failure while grid repair teams work.' },
+                { question: 'Communication towers are down. How should coordination happen?', choices: ['Deploy runners between zones', 'Set up temporary radio relay stations', 'Prioritize restoring one tower for emergency broadcasts'], optimalIndex: 2, reason: 'Restoring a central tower re-establishes a wide-area mesh network, maximizing rapid coordination efficiency.' },
             );
         } else {
             pool.push(
-                { question: 'Resources are limited. Which strategy should be prioritized?', choices: ['Evacuate the highest-risk zone immediately', 'Fortify shelters and distribute supplies', 'Restore roads and power before moving people'] },
-                { question: 'Two zones need help simultaneously. How should resources split?', choices: ['All resources to the higher-risk zone', 'Split 50/50 between both zones', 'Triage: send scouts first, then commit resources'] },
-                { question: 'Volunteers are arriving. What is the best use of untrained help?', choices: ['Supply distribution at shelters', 'Assisting with crowd management at evacuation points', 'Door-to-door welfare checks in safe zones'] },
+                { question: 'Resources are limited. Which strategy should be prioritized?', choices: ['Evacuate the highest-risk zone immediately', 'Fortify shelters and distribute supplies', 'Restore roads and power before moving people'], optimalIndex: 0, reason: 'The analytics engine indicates the highest-risk zone has a 95% hazard probability within the hour. Evacuation is the only viable path.' },
+                { question: 'Two zones need help simultaneously. How should resources split?', choices: ['All resources to the higher-risk zone', 'Split 50/50 between both zones', 'Triage: send scouts first, then commit resources'], optimalIndex: 0, reason: 'Focusing all resources on the higher-risk zone prevents a partial failure in both. Concentration of force is optimal here.' },
+                { question: 'Volunteers are arriving. What is the best use of untrained help?', choices: ['Supply distribution at shelters', 'Assisting with crowd management at evacuation points', 'Door-to-door welfare checks in safe zones'], optimalIndex: 0, reason: 'Supply distribution requires the least specialized training and frees up professional responders for complex tasks.' },
             );
         }
         return pool;
@@ -163,18 +163,40 @@ function DecisionSection({ tick, disaster }) {
         <div className="lp-decision">
             <div className="lp-decision-label">DECISION POINT</div>
             <div className="lp-decision-question">{currentQ.question}</div>
-            {currentQ.choices.map((choice, i) => (
-                <button
-                    key={i}
-                    className={`lp-option-btn ${selected === i ? 'selected' : ''} ${selected !== null && selected !== i ? 'dimmed' : ''}`}
-                    onClick={() => setSelected(i)}
-                >
-                    {choice}
-                </button>
-            ))}
+            
+            <div className={`lp-options-container ${selected !== null ? 'fade-out-shrink' : ''}`}>
+                {currentQ.choices.map((choice, i) => (
+                    <button
+                        key={i}
+                        className={`lp-option-btn ${selected === i ? 'selected' : ''}`}
+                        onClick={() => setSelected(i)}
+                    >
+                        {choice}
+                    </button>
+                ))}
+            </div>
+
             {selected !== null && (
-                <div className="lp-decision-result">
-                    ✓ Choice recorded. The simulation continues — see how this plays out.
+                <div className="lp-decision-result animate-fade-in">
+                    <div style={{ marginBottom: '12px' }}>
+                        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', marginBottom: '4px' }}>YOUR CHOICE</div>
+                        <div style={{ color: selected === currentQ.optimalIndex ? '#22c55e' : 'white', fontWeight: 500 }}>
+                            {currentQ.choices[selected]} 
+                            {selected === currentQ.optimalIndex && <span style={{ marginLeft: 6 }}>✓</span>}
+                        </div>
+                    </div>
+                    
+                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+                        <div style={{ fontSize: '0.72rem', color: '#06b6d4', fontFamily: "'IBM Plex Mono', monospace", marginBottom: '6px' }}>
+                            OPTIMAL SOLUTION (AI ENGINE)
+                        </div>
+                        <div style={{ color: 'white', fontWeight: 500, marginBottom: '6px' }}>
+                            {currentQ.choices[currentQ.optimalIndex]}
+                        </div>
+                        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', lineHeight: 1.5 }}>
+                            {currentQ.reason}
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
@@ -284,10 +306,12 @@ export default function PublicPortal() {
                             { pct: 25, label: 'Road Blocked' },
                             { pct: 50, label: 'Hospital Isolated' },
                             { pct: 75, label: 'Evacuation Begins' },
-                        ].map(m => (
+                        ].map((m, idx) => (
                             <div key={m.pct} style={{ position: 'absolute', left: `${m.pct}%` }}>
                                 <div className={`lp-milestone ${progressPct >= m.pct ? 'passed' : ''}`} />
-                                <div className="lp-milestone-label">{m.label}</div>
+                                <div className={`lp-milestone-label ${idx % 2 === 0 ? 'below' : 'above'} ${progressPct >= m.pct ? 'passed' : ''}`}>
+                                    {m.label}
+                                </div>
                             </div>
                         ))}
                     </div>
