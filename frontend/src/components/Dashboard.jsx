@@ -213,12 +213,12 @@ const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', use
                 </div>
             )}
 
-            {/* AI ML Predictions */}
+            {/* System Predictions */}
             {ml_output && (
                 <div className="glass-card" style={{ padding: '14px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                         <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-                            AI ML Predictions
+                            System Predictions
                         </span>
                         <div style={{ display: 'flex', gap: 6 }}>
                              <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--primary)', padding: '2px 6px', borderRadius: 4, background: 'rgba(59,130,246,0.1)' }}>
@@ -230,13 +230,13 @@ const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', use
                     <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
                         {/* Model Accuracy metrics */}
                         <div style={{ flex: 1, padding: '8px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 600, marginBottom: 2 }}>Risk Model (R²)</div>
+                            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 600, marginBottom: 2 }}>Risk Assessment (Confidence)</div>
                             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--success)' }}>
                                 {(ml_output.model_accuracy_r2 * 100).toFixed(1)}%
                             </div>
                         </div>
                         <div style={{ flex: 1, padding: '8px 10px', background: 'rgba(255,255,255,0.02)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)' }}>
-                            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 600, marginBottom: 2 }}>Casualty Model (R²)</div>
+                            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 600, marginBottom: 2 }}>Casualty Estimate (Confidence)</div>
                             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--success)' }}>
                                 {(ml_output.casualty_model_r2 * 100).toFixed(1)}%
                             </div>
@@ -244,7 +244,7 @@ const Dashboard = React.memo(function Dashboard({ state, userRole = 'admin', use
                     </div>
 
                     <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                        Allocated Resources (via OR-Tools)
+                        Active Resources Allocated
                     </div>
                     
                     <div style={{ display: 'flex', gap: 4 }}>

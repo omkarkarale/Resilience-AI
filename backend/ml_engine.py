@@ -444,10 +444,22 @@ def analyze(zones, infrastructure, roads, disaster, population_metrics=None) -> 
         # Use evac_time as proxy for shelter access if specific metric unavailable
         shelter_access.append((pm.est_evac_time_min * 0.8) if pm else 25.0)
 
+    # ── Dynamic Resource Pools based on Disaster Severity ──────────────────
+    avg_pred_risk = float(mean_risks.mean()) if len(mean_risks) > 0 else 0.0
+    # Scale resources linearly up to full use when risk gets above ~55%
+    urgency_scalar = min(1.0, max(0.15, avg_pred_risk * 1.8))
+    
+    dyn_amb = max(3, int(RESOURCE_POOL["ambulance"] * urgency_scalar))
+    dyn_gen = max(1, int(RESOURCE_POOL["generator"] * urgency_scalar))
+    dyn_bus = max(2, int(RESOURCE_POOL["shelter_bus"] * urgency_scalar))
+
     # ── Resource optimization ──────────────────────────────────────────────
     alloc = optimize_resources(
         zone_ids, mean_risks.tolist(), populations,
         exposed_pops, hosp_access, shelter_access, flood_prone,
+        total_ambulances=dyn_amb,
+        total_generators=dyn_gen,
+        total_buses=dyn_bus,
     )
 
     opt_status = alloc.get("status", "unknown")

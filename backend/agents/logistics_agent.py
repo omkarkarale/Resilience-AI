@@ -24,7 +24,7 @@ class LogisticsAgent(BaseAgent):
             return recommendations
 
         shelters = [i for i in infrastructure if i.type.value == "shelter"]
-        high_risk_zones = [z for z in zones if z.risk_score > 40]
+        high_risk_zones = sorted([z for z in zones if z.risk_score > 40], key=lambda z: -z.risk_score)
         blocked_roads = []
 
         if other_agent_data and "traffic" in other_agent_data:
@@ -62,10 +62,21 @@ class LogisticsAgent(BaseAgent):
             if qty < 100:
                 item_label = item.replace("_", " ").title()
                 high_zone_names = ", ".join(z.name for z in high_risk_zones[:3]) if high_risk_zones else "Mumbai"  # pyre-ignore
+
+                dtype = disaster.type.value
+                if dtype == "flood":
+                    cause = "waterborne hazard displacement"
+                elif dtype == "earthquake":
+                    cause = "structural collapse displacement"
+                elif dtype == "cyclone":
+                    cause = "storm-related displacement"
+                else:
+                    cause = "ongoing disaster operations"
+
                 recommendations.append(AgentRecommendation(
                     agent=self.name,
                     action=f"Emergency resupply of {item_label} — critically low",
-                    reason=f"{item_label} stockpile at {qty} units, below safe threshold for ongoing disaster operations. "
+                    reason=f"{item_label} stockpile at {qty} units, below safe threshold for {cause}. "
                            f"High demand from {len(high_risk_zones)} active zones.",
                     affected_zone=high_zone_names,
                     confidence=93,

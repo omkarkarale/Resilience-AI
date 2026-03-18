@@ -61,12 +61,21 @@ class WeatherAgent(BaseAgent):
 
             high_risk = sorted([z for z in zones if z.risk_score > 55], key=lambda z: -z.risk_score)
             if high_risk:
-                worst = high_risk[0]
+                worst = next((z for z in high_risk if epicenter and z.id == epicenter.id), high_risk[0])
+                dtype = disaster.type.value
+                if dtype == "flood":
+                    cause = "Coastal flooding imminent." if worst.flood_prone else "Severe waterlogging risk."
+                elif dtype == "earthquake":
+                    cause = "Structural collapse risk high."
+                elif dtype == "cyclone":
+                    cause = "Extreme wind damage and storm surge likely."
+                else:
+                    cause = "Critical local infrastructure failure imminent."
+
                 recommendations.append(AgentRecommendation(
                     agent=self.name,
                     action=f"Initiate mandatory evacuation of {worst.name}",
-                    reason=f"Risk score at {worst.risk_score:.0f}% with hazard intensity {worst.hazard_intensity:.0f}. "
-                           f"{'Coastal flooding imminent.' if worst.flood_prone else 'Structural collapse risk high.'}",
+                    reason=f"Risk score at {worst.risk_score:.0f}% with hazard intensity {worst.hazard_intensity:.0f}. {cause}",
                     affected_zone=worst.name,
                     confidence=min(95, worst.risk_score + 10),
                     urgency=UrgencyLevel.CRITICAL,

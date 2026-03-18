@@ -40,11 +40,23 @@ class PowerAgent(BaseAgent):
 
         if self.state["failed_stations"]:
             self.state["load_shedding_active"] = True
-            affected_zone = ", ".join(sorted(list(set(z.name for z in zones if z.hazard_intensity > 50)))[:3]) or "Mumbai Metro"  # pyre-ignore
+            high_hazard = sorted([z for z in zones if z.hazard_intensity > 50], key=lambda z: -z.hazard_intensity)
+            affected_zone = ", ".join(z.name for z in high_hazard[:3]) or "Mumbai Metro"
+            
+            dtype = disaster.type.value
+            if dtype == "flood":
+                cause = "substations flooded and offline"
+            elif dtype == "earthquake":
+                cause = "substations damaged by seismic activity"
+            elif dtype == "cyclone":
+                cause = "substations damaged by severe storm"
+            else:
+                cause = "power station(s) have failed"
+
             recommendations.append(AgentRecommendation(
                 agent=self.name,
                 action=f"Activate zone-based load shedding — {len(self.state['failed_stations'])} substation(s) failed",  # pyre-ignore
-                reason=f"Grid stress at {self.state['grid_stress']:.0f}%. {len(self.state['failed_stations'])} power station(s) have failed, "  # pyre-ignore
+                reason=f"Grid stress at {self.state['grid_stress']:.0f}%. {len(self.state['failed_stations'])} {cause}, "  # pyre-ignore
                        f"causing cascading supply deficit across the network.",
                 affected_zone=affected_zone,
                 confidence=92,
