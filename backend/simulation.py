@@ -1,6 +1,7 @@
 """Disaster Simulation Engine – Tick-based simulation with cascading failures and AI decision support."""
 
 import random
+import os
 from datetime import datetime
 
 from models import (  # pyre-ignore[21]
@@ -11,12 +12,28 @@ from agents import (  # pyre-ignore[21]
     WeatherAgent, TrafficAgent, MedicalAgent,
     PowerAgent, LogisticsAgent, CommandAgent,
 )
-from city_graph import build_city_graph, update_edge_weights  # pyre-ignore[21]
+from city_graph import build_city_graph, update_edge_weights, find_alternate_route  # pyre-ignore[21]
 from risk_engine import compute_all_risks  # pyre-ignore[21]
 from population_sim import compute_population_metrics, get_city_summary  # pyre-ignore[21]
 from resource_optimizer import get_all_allocations  # pyre-ignore[21]
 from strategy_ranker import rank_strategies  # pyre-ignore[21]
 import ml_engine
+
+# ─── Module-level constants (Changes 3, 5) ───
+
+# Decay rates per tick for road severity — how quickly roads self-clear
+DECAY_RATES = {
+    "flood":      0.01,   # slow — water recedes gradually
+    "earthquake": 0.005,  # very slow — structural damage persists
+    "debris":     0.05,   # faster — debris can be cleared
+    "default":    0.02,
+}
+
+# Ambulance ETA & hospital-load cascade constants
+AVG_SPEED_KMH       = 40.0   # emergency vehicle average speed
+BASE_ETA_MINUTES    = 10.0   # expected ETA on clear roads
+DELAY_TO_LOAD_COEFF = 0.05   # extra hospital load per unit delay factor
+
 
 def build_mumbai():
     """Build a realistic Mumbai layout centered around lat 19.0760, lng 72.8777."""
@@ -239,21 +256,33 @@ def build_mumbai():
         [19.0411, 72.8419], [19.0544, 72.8402], [19.0813, 72.8479],
         [19.1013, 72.8553], [19.1197, 72.8468], [19.1378, 72.8456],
         [19.1545, 72.8488], [19.2285, 72.8567],
+    ], geometry=[
+        [19.0596, 72.8295], [19.0650, 72.8310], [19.0710, 72.8340],
+        [19.0760, 72.8370], [19.0820, 72.8400], [19.0880, 72.8430]
     ]))
 
     roads.append(Road(id="r_eeh", name="Eastern Express Highway", points=[
         [19.0391, 72.8616], [19.0665, 72.8794], [19.0862, 72.9098],
         [19.1087, 72.9265], [19.1193, 72.9082], [19.1751, 72.9519],
+    ], geometry=[
+        [19.0390, 72.8727], [19.0450, 72.8780], [19.0510, 72.8830],
+        [19.0560, 72.8870], [19.0610, 72.8910]
     ]))
 
     roads.append(Road(id="r_sion_panvel", name="Sion-Panvel Highway", points=[
         [19.0391, 72.8616], [19.0522, 72.9005], [19.0643, 72.9186],
         [19.0479, 72.9303],
+    ], geometry=[
+        [19.0390, 72.8727], [19.0380, 72.8800], [19.0360, 72.8900],
+        [19.0340, 72.9000], [19.0310, 72.9100]
     ]))
 
     # ── ARTERIAL ROADS ──
     roads.append(Road(id="r_lbs", name="LBS Marg", points=[
         [19.0654, 72.8792], [19.1003, 72.9198], [19.1387, 72.9358],
+    ], geometry=[
+        [19.0650, 72.8800], [19.0700, 72.8830], [19.0760, 72.8860],
+        [19.0820, 72.8890], [19.0880, 72.8920]
     ]))
 
     roads.append(Road(id="r_linking", name="Linking Road, Bandra", points=[
@@ -263,6 +292,9 @@ def build_mumbai():
     roads.append(Road(id="r_sv", name="SV Road (Swami Vivekanand Road)", points=[
         [19.0411, 72.8419], [19.0544, 72.8334], [19.0713, 72.8342],
         [19.0813, 72.8392], [19.1013, 72.8437], [19.1132, 72.8467],
+    ], geometry=[
+        [19.0390, 72.8380], [19.0450, 72.8360], [19.0510, 72.8350],
+        [19.0560, 72.8340]
     ]))
 
     roads.append(Road(id="r_sion_bandra", name="Sion-Bandra Link Road", points=[
@@ -310,11 +342,34 @@ def build_mumbai():
 
     roads.append(Road(id="r_mahim", name="Mahim Causeway", points=[
         [19.0411, 72.8419], [19.0375, 72.8399],
+    ], geometry=[
+        [19.0390, 72.8380], [19.0450, 72.8360], [19.0510, 72.8350],
+        [19.0560, 72.8340]
     ]))
 
     roads.append(Road(id="r_bwsl_north", name="Bandra-Worli Sea Link Approach", points=[
         [19.0544, 72.8295], [19.0411, 72.8243], [19.0178, 72.8178],
     ]))
+
+    # Load imported geometries and override points if available
+    geom_path = os.path.join(os.path.dirname(__file__), "data", "road_geometry.json")
+    geometry_data = {}
+    try:
+        import json
+        if os.path.exists(geom_path):
+            with open(geom_path, "r", encoding="utf-8") as f:
+                geometry_data = json.load(f)
+    except Exception as e:
+        print(f"[simulation] Failed to load road_geometry.json: {e}")
+
+    for road in roads:
+        # Step 4: Populate geometry from loaded JSON if available. Fall back to [] if not.
+        if road.name in geometry_data:
+            road.geometry = geometry_data[road.name].get("geometry", [])
+        elif road.id in geometry_data:
+            road.geometry = geometry_data[road.id].get("geometry", [])
+        else:
+            road.geometry = []  # Fallback
 
     # Restore RNG state so simulation ticks remain random
     random.setstate(rng_state)
@@ -354,6 +409,7 @@ class SimulationEngine:
         self.city_summary = {}
         self.risk_breakdowns = {}
         self.ml_output = None   # MLOutput from ml_engine
+        self._dispatch_eta = BASE_ETA_MINUTES  # ambulance ETA for current tick
 
     def start(self, disaster: DisasterEvent):
         """Start a simulation with the given disaster event."""
@@ -369,6 +425,9 @@ class SimulationEngine:
             road.status = InfraStatus.OPERATIONAL
             road.blocked = False
             road.damage = 0.0
+            road.severity = 0.0
+            road.blocked_lanes = 0
+            road.tick_blocked_since = None
         for zone in self.zones:
             zone.risk_score = 0.0
             zone.hazard_intensity = 0.0
@@ -413,6 +472,68 @@ class SimulationEngine:
             self.zones, self.infrastructure, self.roads, self.disaster
         )
 
+        # ── 2b. Severity update + decay (Changes 1, 3) ──
+        # Map road damage → severity [0.0, 1.0]; keep blocked flag derived from it.
+        decay_rate = DECAY_RATES.get(
+            self.disaster.type.value if self.disaster else "default",
+            DECAY_RATES["default"]
+        )
+        for road in self.roads:
+            # Compute severity from damage (damage scale is 0–100 in traffic agent)
+            new_severity = min(1.0, road.damage / 100.0)
+            if new_severity > 0 and road.tick_blocked_since is None:
+                road.tick_blocked_since = self.tick   # stamp first blockage tick
+            elif new_severity == 0:
+                road.tick_blocked_since = None
+
+            # Apply decay only after a 3-tick grace period
+            if (
+                road.tick_blocked_since is not None
+                and (self.tick - road.tick_blocked_since) >= 3
+                and new_severity > 0
+            ):
+                new_severity = max(0.0, new_severity - decay_rate)
+                # Also nudge damage downward to stay consistent
+                road.damage = max(0.0, road.damage - decay_rate * 100)
+
+            road.severity = round(new_severity, 4)
+            # Derive blocked from severity instead of keeping it purely boolean
+            road.blocked = road.severity >= 1.0
+            # Keep blocked_lanes consistent with severity
+            road.blocked_lanes = int(round(road.severity * road.total_lanes))
+
+        # ── 2c. Ambulance ETA rerouting (Change 4) ──
+        # Find the zone with highest risk as emergency source; target nearest hospital.
+        high_sev_edge_ids = {
+            eidx
+            for eidx, edge in enumerate(self.graph_edges)
+            if edge.hazard_risk / 100 > 0.7  # proxy for road severity > 0.7
+        }
+        self._dispatch_eta = BASE_ETA_MINUTES  # default — reset each tick
+        if high_sev_edge_ids and self.graph_nodes and self.tick > 0:
+            # Pick worst-risk zone as source
+            worst_zone = max(self.zones, key=lambda z: z.risk_score, default=None)
+            if worst_zone:
+                source_node = f"zone_{worst_zone.id}"
+                # Find nearest hospital node as target
+                hosp_nodes = [
+                    nid for nid, n in self.graph_nodes.items()
+                    if n.node_type == "hospital" and n.status != "failed"
+                ]
+                if hosp_nodes and source_node in self.adj:
+                    target_node = hosp_nodes[0]  # nearest will be refined by Dijkstra
+                    alt_path, alt_cost = find_alternate_route(
+                        self.adj, self.graph_edges, source_node, target_node, high_sev_edge_ids
+                    )
+                    if alt_path and alt_cost < 9999.0:
+                        # Convert graph cost (minutes) back to a distance estimate
+                        eta = alt_cost  # already in minutes (Dijkstra weight = travel time)
+                    else:
+                        # If no alternate path, estimate a severe delay
+                        eta = BASE_ETA_MINUTES * 3
+                    self._dispatch_eta = eta
+
+
         # ── 3. Update Graph Edge Weights (blocked roads, hazard) ──
         update_edge_weights(self.graph_nodes, self.graph_edges, self.adj, self.zones, self.roads)
 
@@ -430,6 +551,19 @@ class SimulationEngine:
             self.zones, self.infrastructure, self.roads, self.disaster,
             other_agent_data={"traffic": self.agents["traffic"].state}
         )
+
+        # ── Change 5: Response-time → hospital load cascade ──
+        # If ambulance ETA exceeds baseline, apply extra load to hospitals.
+        if self._dispatch_eta > BASE_ETA_MINUTES:
+            delay_factor = self._dispatch_eta / BASE_ETA_MINUTES
+            load_penalty = int(DELAY_TO_LOAD_COEFF * delay_factor * 100)  # scaled delta
+            hospitals = [i for i in self.infrastructure if i.type == InfrastructureType.HOSPITAL]
+            if hospitals:
+                # Distribute penalty evenly across operational hospitals
+                per_hosp = max(1, load_penalty // max(len(hospitals), 1))
+                for hosp in hospitals:
+                    if hosp.status != InfraStatus.FAILED:
+                        hosp.current_load = min(hosp.capacity * 2, hosp.current_load + per_hosp)
 
         # ── 7. Power Agent ──
         power_recs = self.agents["power"].analyze(

@@ -2,7 +2,70 @@
 
 import heapq
 import math
+import os
 from models import GraphNode, GraphEdge
+
+# ─── Constants ───
+CONGESTION_MULTIPLIER = 2.5   # used in effective_travel_time calc (Change 1)
+_OSMNX_CACHE_PATH = os.path.join(os.path.dirname(__file__), "data", "mumbai_roads.graphml")
+
+
+# ─── Optional OSMnx road loader (Change 2) ───
+
+def load_osmnx_roads(place: str = "Mumbai, India") -> dict:
+    """Fetch the drivable road network for `place` via osmnx.
+
+    Results are cached at backend/data/mumbai_roads.graphml so subsequent
+    server starts are instant.  The function returns a dict mapping
+    road_id ("osm_{osmid}") → {lat, lon, length_km, name}.
+
+    Falls back to an empty dict if osmnx is not installed or the
+    network fetch fails, so the caller can gracefully degrade to the
+    hardcoded road seeds already in simulation.py.
+    """
+    try:
+        import osmnx as ox  # optional dependency
+    except ImportError:
+        print("[city_graph] osmnx not installed — skipping real road enrichment.")
+        return {}
+
+    # Use cached graphml if available
+    if os.path.exists(_OSMNX_CACHE_PATH):
+        try:
+            G = ox.load_graphml(_OSMNX_CACHE_PATH)
+            print(f"[city_graph] Loaded Mumbai road graph from cache ({_OSMNX_CACHE_PATH}).")
+        except Exception as e:
+            print(f"[city_graph] Cache load failed ({e}), re-fetching from OSM.")
+            G = None
+    else:
+        G = None
+
+    if G is None:
+        try:
+            G = ox.graph_from_place(place, network_type="drive")
+            os.makedirs(os.path.dirname(_OSMNX_CACHE_PATH), exist_ok=True)
+            ox.save_graphml(G, _OSMNX_CACHE_PATH)
+            print(f"[city_graph] Fetched & cached Mumbai road graph ({len(G.edges())} edges).")
+        except Exception as e:
+            print(f"[city_graph] OSM fetch failed ({e}) — using hardcoded fallback.")
+            return {}
+
+    roads: dict = {}
+    for u, v, data in G.edges(data=True):
+        road_id = f"osm_{u}_{v}"
+        name = data.get("name", f"OSM Road {u}-{v}")
+        if isinstance(name, list):
+            name = name[0]
+        length_km = data.get("length", 0) / 1000.0
+        # Use the 'from' node coords as representative lat/lon
+        node_data = G.nodes[u]
+        roads[road_id] = {
+            "lat": node_data.get("y", 0.0),
+            "lon": node_data.get("x", 0.0),
+            "length_km": round(length_km, 4),
+            "name": name,
+        }
+    return roads
 
 
 def _haversine_km(lat1, lng1, lat2, lng2):
@@ -24,6 +87,21 @@ def build_city_graph(zones, infrastructure, roads):
         edges: list[GraphEdge]
         adj: dict[str, list[tuple[str, float, int]]]  — adjacency: node_id → [(neighbor_id, weight, edge_index)]
     """
+    import json
+    import os
+    geom_path = os.path.join(os.path.dirname(__file__), "data", "road_geometry.json")
+    try:
+        if os.path.exists(geom_path):
+            with open(geom_path, "r", encoding="utf-8") as f:
+                geometry_data = json.load(f)
+            for road in roads:
+                if road.name in geometry_data:
+                    road.geometry = geometry_data[road.name].get("geometry", [])
+                elif road.id in geometry_data:
+                    road.geometry = geometry_data[road.id].get("geometry", [])
+    except Exception as e:
+        print(f"[city_graph] Failed to load road_geometry.json: {e}")
+
     nodes = {}
     edges = []
     adj = {}
@@ -103,9 +181,9 @@ def update_edge_weights(nodes, edges, adj, zones, roads):
     # Build zone hazard lookup
     zone_hazard = {z.id: z.hazard_intensity for z in zones}
 
-    # Build blocked road set (road IDs)
-    blocked_road_ids = {r.id for r in roads if r.blocked}
-    any_blocked = len(blocked_road_ids) > 0
+    # Build a severity lookup from the Road model (keyed by road id)
+    road_severity = {r.id: r.severity for r in roads}
+    any_partial = any(s > 0 for s in road_severity.values())
 
     BASE_SPEED_KPH = 25.0
 
@@ -124,11 +202,13 @@ def update_edge_weights(nodes, edges, adj, zones, roads):
         avg_hazard = (src_hazard + tgt_hazard) / 2
         hazard_factor = 1.0 + (avg_hazard / 100) * 2.0  # up to 3x slower in max hazard
 
-        # Check if edge is blocked (if either endpoint zone has severe blockage)
-        is_blocked = False
-        if any_blocked and avg_hazard > 60:
-            # Probabilistic blockage based on hazard — edges in high-hazard areas more likely blocked
-            is_blocked = avg_hazard > 75
+        # Derive severity for this edge: use avg of zone hazard → [0.0, 1.0]
+        # (Road-level severity from traffic agent is tracked on the Road model;
+        #  here we proxy from zone hazard so the graph stays consistent.)
+        edge_severity = min(1.0, avg_hazard / 100)
+
+        # Full blockage when severity >= 1.0 (derived from Road.blocked or hazard)
+        is_blocked = avg_hazard >= 100  # keep existing hard-block threshold
 
         edge.hazard_risk = round(avg_hazard, 1)
         edge.blocked = is_blocked
@@ -137,7 +217,9 @@ def update_edge_weights(nodes, edges, adj, zones, roads):
         if is_blocked:
             edge.weight = 9999.0  # effectively disconnected
         else:
-            edge.weight = round(max(0.5, base_time * hazard_factor), 2)
+            # Change 1: effective_travel_time = base * (1 + severity * congestion_multiplier)
+            effective_time = base_time * hazard_factor * (1.0 + edge_severity * CONGESTION_MULTIPLIER)
+            edge.weight = round(max(0.5, effective_time), 2)
 
     # Rebuild adj weights
     for node_id in adj:
@@ -226,3 +308,66 @@ def compute_accessibility(adj, nodes, zone_node_id):
     shelter_cost = min(shelter_cost, 60)
 
     return round((hosp_cost + shelter_cost) / 2, 1)
+
+
+# ─── Alternate Route Finder (Change 4) ───
+
+def find_alternate_route(adj: dict, edges: list, source_id: str, target_id: str,
+                         blocked_edge_ids: set) -> tuple:
+    """Find shortest path from source to target, ignoring edges in blocked_edge_ids.
+
+    Temporarily removes blocked edges from adj, runs Dijkstra, then restores.
+
+    Args:
+        adj: adjacency dict {node_id: [(neighbor_id, weight, edge_idx), ...]}
+        edges: list of GraphEdge objects (used to verify edge_idx)
+        source_id: starting node id
+        target_id: destination node id
+        blocked_edge_ids: set of edge indices (int) to skip
+
+    Returns:
+        (path: list[str], cost: float)  — path is [] if unreachable.
+    """
+    if source_id not in adj or target_id not in adj:
+        return [], float('inf')
+
+    # Build a filtered adjacency without blocked edges
+    filtered_adj: dict = {}
+    for node_id, neighbors in adj.items():
+        filtered_adj[node_id] = [
+            (nid, w, eidx)
+            for nid, w, eidx in neighbors
+            if eidx not in blocked_edge_ids
+        ]
+
+    # Run Dijkstra on filtered graph
+    dist = {node_id: float('inf') for node_id in filtered_adj}
+    prev: dict = {node_id: None for node_id in filtered_adj}
+    dist[source_id] = 0
+    pq = [(0.0, source_id)]
+
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist[u]:
+            continue
+        if u == target_id:
+            break
+        for v, w, _ in filtered_adj.get(u, []):
+            nd = d + w
+            if nd < dist.get(v, float('inf')):
+                dist[v] = nd
+                prev[v] = u
+                heapq.heappush(pq, (nd, v))
+
+    cost = dist.get(target_id, float('inf'))
+    if cost == float('inf'):
+        return [], float('inf')
+
+    # Reconstruct path
+    path = []
+    node: str | None = target_id
+    while node is not None:
+        path.append(node)
+        node = prev.get(node)
+    path.reverse()
+    return path, cost

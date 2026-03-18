@@ -49,6 +49,13 @@ class Road(BaseModel):
     status: InfraStatus = InfraStatus.OPERATIONAL
     blocked: bool = False
     damage: float = 0.0
+    # Partial-blockage severity: 0.0 = clear, 1.0 = fully blocked
+    severity: float = 0.0
+    blocked_lanes: int = 0
+    total_lanes: int = 2
+    # Tick on which severity first exceeded 0 (used for decay grace period)
+    tick_blocked_since: Optional[int] = None
+    geometry: list[list[float]] = []
 
 
 class Zone(BaseModel):

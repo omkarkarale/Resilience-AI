@@ -502,67 +502,114 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                                 const midIdx = Math.floor(road.points.length / 2);
                                 const mid = road.points[midIdx];
 
-                                // ── BLOCKED ──────────────────────────────────────
-                                if (road.blocked || road.status === 'failed') {
+                                const positions = road.geometry && road.geometry.length > 1
+                                    ? road.geometry
+                                    : road.points;
+
+                                // Resolve severity — new field; fall back to binary blocked for old payloads
+                                const sev = typeof road.severity === 'number' ? road.severity : (road.blocked ? 1.0 : 0.0);
+
+                                // Helper: map severity to color + opacity per spec
+                                function getSeverityStyle(s) {
+                                    if (s >= 0.7) return { color: '#ef4444', opacity: 1.0 };    // red — severe
+                                    if (s >= 0.3) return { color: '#f97316', opacity: 0.7 };    // orange — moderate
+                                    if (s > 0.0)  return { color: '#eab308', opacity: 0.5 };    // yellow — light
+                                    return null; // fully clear — render as emergency lane if sim running
+                                }
+
+                                const sevStyle = getSeverityStyle(sev);
+
+                                // ── BLOCKED / HIGH SEVERITY (severity >= 0.7 or fully blocked) ──
+                                if (sevStyle && sev >= 0.7) {
                                     return (
                                         <LayerGroup key={road.id}>
                                             <Polyline
-                                                positions={road.points}
+                                                positions={positions}
                                                 pathOptions={{
-                                                    color: '#ef4444',
+                                                    color: sevStyle.color,
                                                     weight: 5,
-                                                    opacity: 0.9,
-                                                    dashArray: '10, 6',
+                                                    opacity: sevStyle.opacity,
+                                                    dashArray: sev >= 1.0 ? '10, 6' : '6, 4',
                                                 }}
                                             >
                                                 <Tooltip sticky>
                                                     <span style={{ fontWeight: 700 }}>{road.name}</span>
                                                     <br />
-                                                    <span style={{ color: '#ef4444' }}>BLOCKED — road impassable</span>
+                                                    <span style={{ color: sevStyle.color }}>
+                                                        {sev >= 1.0
+                                                            ? 'BLOCKED — road impassable'
+                                                            : `SEVERE — ${Math.round(sev * 100)}% blocked`}
+                                                    </span>
                                                 </Tooltip>
                                             </Polyline>
-                                            {/* ✕ midpoint marker — visible on zoom‑out */}
-                                            <Marker position={mid} icon={createBlockedIcon()}>
-                                                <Tooltip>
-                                                    <span style={{ fontWeight: 700 }}>{road.name}</span>
-                                                    {' — '}
-                                                    <span style={{ color: '#ef4444' }}>BLOCKED</span>
-                                                </Tooltip>
-                                            </Marker>
+                                            {/* ✕ midpoint marker for fully blocked roads */}
+                                            {sev >= 1.0 && (
+                                                <Marker position={mid} icon={createBlockedIcon()}>
+                                                    <Tooltip>
+                                                        <span style={{ fontWeight: 700 }}>{road.name}</span>
+                                                        {' — '}
+                                                        <span style={{ color: '#ef4444' }}>BLOCKED</span>
+                                                    </Tooltip>
+                                                </Marker>
+                                            )}
                                         </LayerGroup>
                                     );
                                 }
 
-                                // ── COMPROMISED / DEGRADED ────────────────────────
-                                if (road.status === 'degraded') {
+                                // ── MODERATE SEVERITY (0.3 – 0.7) ──
+                                if (sevStyle && sev >= 0.3) {
                                     return (
                                         <Polyline
                                             key={road.id}
-                                            positions={road.points}
+                                            positions={positions}
                                             pathOptions={{
-                                                color: '#f59e0b',
+                                                color: sevStyle.color,
                                                 weight: 3,
-                                                opacity: 0.7,
+                                                opacity: sevStyle.opacity,
                                                 dashArray: '6, 4',
                                             }}
                                         >
                                             <Tooltip sticky>
                                                 <span style={{ fontWeight: 700 }}>{road.name}</span>
                                                 <br />
-                                                <span style={{ color: '#f59e0b' }}>COMPROMISED — reduced capacity</span>
+                                                <span style={{ color: sevStyle.color }}>
+                                                    COMPROMISED — {Math.round(sev * 100)}% severity
+                                                </span>
                                             </Tooltip>
                                         </Polyline>
                                     );
                                 }
 
-                                // ── EMERGENCY LANE (operational) ──────────────────
-                                // Only render operational roads as emergency lanes when
-                                // a disaster is active (damage > 0 means sim is running)
+                                // ── LIGHT SEVERITY (0.0 – 0.3) ──
+                                if (sevStyle && sev > 0.0) {
+                                    return (
+                                        <Polyline
+                                            key={road.id}
+                                            positions={positions}
+                                            pathOptions={{
+                                                color: sevStyle.color,
+                                                weight: 2,
+                                                opacity: sevStyle.opacity,
+                                                dashArray: '4, 4',
+                                            }}
+                                        >
+                                            <Tooltip sticky>
+                                                <span style={{ fontWeight: 700 }}>{road.name}</span>
+                                                <br />
+                                                <span style={{ color: sevStyle.color }}>
+                                                    CONGESTED — {Math.round(sev * 100)}% affected
+                                                </span>
+                                            </Tooltip>
+                                        </Polyline>
+                                    );
+                                }
+
+                                // ── CLEAR — show as emergency lane when sim is active ──
                                 if (road.status === 'operational' && road.damage > 0) {
                                     return (
                                         <Polyline
                                             key={road.id}
-                                            positions={road.points}
+                                            positions={positions}
                                             pathOptions={{
                                                 color: '#22c55e',
                                                 weight: 4,
@@ -582,6 +629,7 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                             })}
                         </LayerGroup>
                     )}
+
 
                     {/* ── Hospitals — gated by pill toggle ── */}
                     {!isPublic && visibleLayers.hospitals && (
