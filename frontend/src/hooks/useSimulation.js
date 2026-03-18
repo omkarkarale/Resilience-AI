@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-const WS_URL = 'ws://127.0.0.1:8000/ws';
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const WS_URL = API_BASE.replace('https://', 'wss://').replace('http://', 'ws://') + '/ws';
 
 export function useSimulation(token = null) {
     const [state, setState] = useState(null);
