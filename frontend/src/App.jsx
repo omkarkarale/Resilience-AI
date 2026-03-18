@@ -211,15 +211,15 @@ function CommandCenter() {
           
           {/* Left Column — Map + Timeline + Cascade */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0 }}>
+            {/* Map — takes all remaining vertical space */}
             <div className="glass-card" style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: '480px', borderRadius: 10 }}>
               <CityMap state={state} theme={theme} userRole={userRole} userDepartment={userDepartment} />
-              
-              {timeline.length > 0 && (
-                <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8, zIndex: 1000 }}>
-                  <TimelineSlider timeline={timeline} viewingTick={viewingTick} onViewTick={viewTick} running={isRunning} />
-                </div>
-              )}
             </div>
+
+            {/* Timeline — below the map, in normal document flow */}
+            {timeline.length > 0 && (
+              <TimelineSlider timeline={timeline} viewingTick={viewingTick} onViewTick={viewTick} running={isRunning} />
+            )}
 
             {state?.cascading_events?.length > 0 && userRole === 'admin' && (
               <CascadingFlow events={state.cascading_events} />
