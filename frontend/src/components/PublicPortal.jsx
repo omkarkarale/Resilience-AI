@@ -371,17 +371,9 @@ export default function PublicPortal() {
                             </React.Fragment>
                         ))}
                     </div>
-                    <button
-                        className="lp-chain-toggle"
-                        onClick={() => setChainExpanded(e => !e)}
-                    >
-                        {chainExpanded ? '▲ Hide explanation' : '▼ Understand this chain'}
-                    </button>
-                    <div className={`lp-chain-explain ${chainExpanded ? 'open' : ''}`}>
-                        {chainExplanation}
-                    </div>
                 </div>
             </div>
         </div>
     );
 }
+
