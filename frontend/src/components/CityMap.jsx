@@ -117,8 +117,10 @@ const DEPT_INFRA_MAP = {
 };
 
 // ── Compact collapsible legend ────────────────────────────────────────────────
-function MapLegend() {
+function MapLegend({ theme }) {
     const [expanded, setExpanded] = useState(true);
+
+    const isLight = theme === 'light';
 
     const cardStyle = {
         position: 'absolute',
@@ -126,14 +128,15 @@ function MapLegend() {
         left: 12,
         zIndex: 1000,
         maxWidth: 180,
-        background: 'rgba(15, 15, 20, 0.85)',
+        background: isLight ? 'rgba(255, 255, 255, 0.9)' : 'rgba(15, 15, 20, 0.85)',
         backdropFilter: 'blur(8px)',
         borderRadius: 8,
-        border: '1px solid rgba(255,255,255,0.08)',
+        border: isLight ? '1px solid rgba(0, 0, 0, 0.1)' : '1px solid rgba(255,255,255,0.08)',
         padding: 10,
         fontSize: 11,
-        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+        boxShadow: isLight ? '0 4px 12px rgba(0,0,0,0.1)' : '0 4px 16px rgba(0,0,0,0.4)',
         userSelect: 'none',
+        color: isLight ? '#0f172a' : '#cbd5e1',
     };
 
     const sectionLabel = {
@@ -141,7 +144,7 @@ function MapLegend() {
         fontWeight: 700,
         letterSpacing: '0.07em',
         textTransform: 'uppercase',
-        color: '#64748b',
+        color: isLight ? '#475569' : '#64748b',
         marginBottom: 5,
         marginTop: 8,
     };
@@ -151,7 +154,7 @@ function MapLegend() {
         alignItems: 'center',
         gap: 7,
         marginBottom: 3,
-        color: '#cbd5e1',
+        color: isLight ? '#334155' : '#cbd5e1',
         lineHeight: 1.3,
     };
 
@@ -187,10 +190,10 @@ function MapLegend() {
                     marginTop: 0,
                 }}
             >
-                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: '#94a3b8' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: isLight ? '#64748b' : '#94a3b8' }}>
                     Legend
                 </span>
-                <span style={{ fontSize: 10, color: '#475569', lineHeight: 1 }}>
+                <span style={{ fontSize: 10, color: isLight ? '#94a3b8' : '#475569', lineHeight: 1 }}>
                     {expanded ? '▲' : '▼'}
                 </span>
             </div>
@@ -205,7 +208,7 @@ function MapLegend() {
                     <div style={row}>{iconBadge(COLORS.healthy, '🏠')}<span>Shelter</span></div>
                     <div style={row}>{iconBadge(COLORS.critical, '🔥')}<span>Fire Station</span></div>
 
-                    <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '6px 0' }} />
+                    <div style={{ height: 1, background: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)', margin: '6px 0' }} />
 
                     <div style={row}><span style={dot(COLORS.healthy)} /><span>Operational</span></div>
                     <div style={row}><span style={dot(COLORS.warning)} /><span>Degraded</span></div>
@@ -224,30 +227,31 @@ function MapLegend() {
 }
 
 // ── Individual pill button with hover state ──────────────────────────────────
-function PillButton({ label, accentColor, visible, onToggle }) {
+function PillButton({ label, accentColor, visible, onToggle, theme }) {
     const [hovered, setHovered] = useState(false);
+    const isLight = theme === 'light';
 
     let background, border, color, textDecoration, boxShadow;
 
     if (!visible) {
         // Toggled OFF — layer hidden
         background = 'transparent';
-        border = '1px solid #475569';
-        color = '#475569';
+        border = isLight ? '1px solid #cbd5e1' : '1px solid #475569';
+        color = isLight ? '#94a3b8' : '#475569';
         textDecoration = 'line-through';
         boxShadow = 'none';
     } else if (hovered) {
         // Hovered while visible
-        background = '#1e293b';
+        background = isLight ? '#f8fafc' : '#1e293b';
         border = `1px solid ${accentColor}`;
-        color = '#ffffff';
+        color = isLight ? '#0f172a' : '#ffffff';
         textDecoration = 'none';
         boxShadow = `inset 3px 0 0 ${accentColor}`;
     } else {
         // Default — visible, not hovered
-        background = '#1e293b';
-        border = '1px solid #334155';
-        color = '#94a3b8';
+        background = isLight ? '#ffffff' : '#1e293b';
+        border = isLight ? '1px solid #e2e8f0' : '1px solid #334155';
+        color = isLight ? '#475569' : '#94a3b8';
         textDecoration = 'none';
         boxShadow = 'none';
     }
@@ -306,6 +310,7 @@ function LayerFilterBar({ visibleLayers, onToggle, theme }) {
                     accentColor={color}
                     visible={visibleLayers[key]}
                     onToggle={() => onToggle(key)}
+                    theme={theme}
                 />
             ))}
         </div>
@@ -716,7 +721,7 @@ const CityMap = React.memo(({ state, theme = 'dark', onZoneClick, userRole = 'ad
                 </MapContainer>
 
                 {/* ── Compact collapsible legend — bottom-left ── */}
-                <MapLegend />
+                <MapLegend theme={theme} />
             </div>
         </div>
     );
