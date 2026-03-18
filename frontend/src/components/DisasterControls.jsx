@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const DISASTERS = [
     { type: 'flood',        label: 'Flood',        color: '#3b82f6' },
@@ -28,9 +29,17 @@ function GearIcon() {
 }
 
 export default function DisasterControls({ onStart, onStop, onReset, running, loading, error }) {
-    const [selectedDisaster, setSelectedDisaster] = useState('flood');
-    const [selectedZone, setSelectedZone] = useState('z9');
-    const [intensity, setIntensity] = useState(70);
+    const { activeExperiment, setActiveExperiment } = useAuth();
+
+    // Derive local UI-selection values from context (persist across unmount) or fall back to defaults
+    const selectedDisaster = activeExperiment?.type ?? 'flood';
+    const selectedZone     = activeExperiment?.zone ?? 'z9';
+    const intensity        = activeExperiment?.intensity ?? 70;
+
+    const setSelectedDisaster = (type)     => setActiveExperiment(prev => ({ ...(prev ?? {}), type,      zone: prev?.zone ?? 'z9',   intensity: prev?.intensity ?? 70 }));
+    const setSelectedZone     = (zone)     => setActiveExperiment(prev => ({ ...(prev ?? {}), zone,      type: prev?.type ?? 'flood', intensity: prev?.intensity ?? 70 }));
+    const setIntensity        = (intensity) => setActiveExperiment(prev => ({ ...(prev ?? {}), intensity, type: prev?.type ?? 'flood', zone: prev?.zone ?? 'z9' }));
+
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     // Auto-collapse when simulation starts
@@ -40,6 +49,8 @@ export default function DisasterControls({ onStart, onStop, onReset, running, lo
 
     const handleStart = () => {
         if (loading) return;
+        // Persist selection to context before starting
+        setActiveExperiment({ type: selectedDisaster, zone: selectedZone, intensity });
         onStart(selectedDisaster, selectedZone, intensity);
     };
 
@@ -62,11 +73,11 @@ export default function DisasterControls({ onStart, onStop, onReset, running, lo
                     {loading ? 'Starting…' : 'Start Experiment'}
                 </button>
             ) : (
-                <button onClick={onStop} className="btn-primary danger" style={{ width: '100%' }}>
+                <button onClick={() => { setActiveExperiment(null); onStop(); }} className="btn-primary danger" style={{ width: '100%' }}>
                     Stop Experiment
                 </button>
             )}
-            <button onClick={onReset} disabled={loading} className="btn-ghost" style={{ width: '100%' }}>
+            <button onClick={() => { setActiveExperiment(null); onReset(); }} disabled={loading} className="btn-ghost" style={{ width: '100%' }}>
                 Reset
             </button>
         </div>

@@ -7,6 +7,8 @@ export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [token, setToken] = useState(() => localStorage.getItem('resilience-token'));
     const [loading, setLoading] = useState(true);
+    // Experiment state lifted here so it survives tab navigation (DisasterControls unmounts/remounts)
+    const [activeExperiment, setActiveExperiment] = useState(null);
 
     // Validate stored token on mount
     useEffect(() => {
@@ -88,6 +90,8 @@ export function AuthProvider({ children }) {
             isAdmin: user?.role === 'admin',
             isOperator: user?.role === 'operator',
             isPublic: user?.role === 'public',
+            activeExperiment,
+            setActiveExperiment,
         }}>
             {children}
         </AuthContext.Provider>
