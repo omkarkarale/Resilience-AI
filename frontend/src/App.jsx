@@ -218,7 +218,7 @@ function CommandCenter() {
 
             {/* Timeline — below the map, in normal document flow */}
             {timeline.length > 0 && (
-              <TimelineSlider timeline={timeline} viewingTick={viewingTick} onViewTick={viewTick} running={isRunning} />
+              <TimelineSlider timeline={timeline} viewingTick={viewingTick} onViewTick={viewTick} running={isRunning} theme={theme} />
             )}
 
             {state?.cascading_events?.length > 0 && userRole === 'admin' && (
