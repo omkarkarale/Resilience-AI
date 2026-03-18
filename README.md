@@ -1,120 +1,72 @@
-# Resilience AI: Disaster Simulation & Crisis Management Digital Twin
+# Resilience AI
 
-**Resilience AI** is an advanced, real-time "Digital Twin" of Mumbai designed for disaster simulation, risk prediction, and resource optimization. It combines agent-based modelling with Machine Learning (Random Forest, Gradient Boosting) and Integer Linear Programming (ILP) to provide a comprehensive decision-support system for emergency responders.
+**Team Name:** Axiom Crew  
+**PS Title:** Open Innovation  
 
----
+## Overview
+Resilience AI is an AI-powered educational simulation platform that enables students, trainees, and researchers to explore urban disaster scenarios in a safe, virtual environment.  
+It models a city as an interconnected digital twin — comprising roads, hospitals, shelters, power grids, and emergency services — and lets users simulate the spread of disasters such as floods and earthquakes across these systems.
 
-## 🚀 Core Features
+Through an interactive dashboard, learners can observe cascading infrastructure failures in real time, test different response strategies, and receive AI-generated recommendations — all while building critical thinking and systems-level reasoning.
 
-### 1. Real-Time Digital Twin (Mumbai)
-- **Geographic Precision**: Features 14 realistic Mumbai zones (from Colaba to Powai) with accurate bounding boxes.
-- **Infrastructure Mapping**: Includes 100+ critical facilities (Hospitals, Power Stations, Shelters, Fire Stations) mapped to their real-world GPS coordinates.
-- **Dynamic Road Network**: Simulates major highways (WEH, EEH, Bandra-Worli Sea Link) with real-time blockage and severity logic.
+## Problem Statement
+Students and educators in disaster management, urban planning, and civil engineering lack access to interactive, hands-on tools to understand how disasters affect interconnected city systems.  
+Traditional classroom methods cannot replicate the complexity of cascading infrastructure failures — leaving learners unprepared for real-world emergencies.
 
-### 2. Multi-Agent Simulation Engine
-- **Autonomous Reasoning**: Six specialized agents (Weather, Traffic, Medical, Power, Logistics, Command) analyze simulation data and provide real-time recommendations.
-- **Cascading Failures**: A sophisticated engine that simulates how a power grid failure can overload hospitals or how road blockages increase casualty rates.
-- **Tick-based Evolution**: Situations evolve every 5 seconds, with disaster intensity following a stochastic (weighted random) walk.
+Resilience AI solves this by transforming complex disaster management concepts into an engaging, visual, and hands-on learning experience.
 
-### 3. ML & Optimization Layer
-- **Risk Prediction**: Uses a **Random Forest Regressor** to predict zone-level risk with 95% confidence intervals and automated local explainability.
-- **Resource Optimization**: Implements **Integer Linear Programming (ILP)** via **Google OR-Tools (SCIP Solver)** to optimally distribute limited ambulances and generators across high-risk zones.
-- **Synthetic Training**: Models are trained on a custom-built synthetic generator that encodes the physics of the simulation world.
+## Key Features
+- **Digital Twin City Model** — Graph-based simulation of interconnected urban infrastructure (roads, hospitals, power grids, shelters) that students can explore and interact with
+- **Multi-Hazard Scenario Simulation** — Simulate floods, earthquakes, and multi-system failures to observe how disruptions cascade across a city
+- **Multi-Agent AI for Education** — Autonomous AI agents demonstrate traffic rerouting, hospital load balancing, and resource allocation, helping students learn coordination strategies
+- **Live Risk Dashboard** — Visual, real-time display of infrastructure health, risk zones, and resource availability for intuitive learning
+- **What-If Scenario Testing** — Students can modify variables, deploy interventions, and compare outcomes to learn decision-making under pressure
+- **Cascading Failure Analysis** — Highlights critical failure points across the city, teaching learners to identify vulnerabilities in urban systems
+- **Strategy Recommendation Engine** — AI-generated response plans with explanations, helping students understand trade-offs in emergency management
 
-## 🔄 System Workflows
-
-### 1. Frontend Architecture & Flow (React)
-The frontend is a real-time reactive dashboard that maintains a synchronized state with the backend "Digital Twin."
-
-**Workflow Lifecycle:**
-1.  **Direct Auth**: The user logs in via `AuthContext.jsx`. In this simplified version, the email is treated as a session token, bypassing traditional JWT verification for local demo speed.
-2.  **Dashboard Initialization**: On load, `useSimulation.js` fetches the initial "City State" via a REST call (`/api/city`) to populate the map and metrics.
-3.  **WebSocket Handshake**: After the REST fetch, the client opens a **Persisted WebSocket** (`/ws`). This is the heart of the real-time experience.
-4.  **Simulation Trigger**: When an Admin clicks "Start Simulation," a POST request is sent to `/api/start`. The backend responds with the "Epicenter" coordinates.
-5.  **Live State Updates**: The WebSocket begins broadcasting a fresh `SimulationState` every 5 seconds. The frontend receives this, parses the JSON, and triggers a re-render of the Leaflet Map and Risk Charts.
-6.  **Intervention (What-If)**: Users can interact with the map to deploy resources. This triggers a REST call to `/api/whatif`, which the backend processes and reflects in the next WebSocket broadcast.
-
-### 2. Backend Lifecycle (The Simulation Tick)
-The backend is built around a "Tick-based" engine. Every 5 seconds (one "tick"), the entire city is re-evaluated.
-
-```mermaid
-sequenceDiagram
-    participant FE as Frontend Dashboard
-    participant BE as FastAPI Server
-    participant SE as Simulation Engine
-    participant AG as AI Agents (Weather/Traffic)
-    participant ML as ML Engine (Random Forest)
-    participant OPT as Resource Optimizer (ILP)
-
-    FE->>BE: POST /api/start
-    BE->>SE: engine.start(disaster)
-    Note over SE: Background Tick Loop Starts
-    loop Every 5 Seconds
-        SE->>AG: Analyze Situation (Heuristics)
-        AG->>SE: Component Recommendations
-        SE->>ML: Predict Risk & Casualties
-        ML->>SE: Risk Scores + Conf Interval
-        SE->>OPT: Optimize Resource Distribution
-        OPT->>SE: Optimal Ambulance/Bus Allocations
-        SE->>BE: Compute Composite State
-        BE->>FE: WebSocket Broadcast (JSON)
-    end
-```
-
-**Internal Tick Logic:**
-- **Dynamic Decay**: Roads don't stay blocked forever. A decay algorithm gradually "clears" debris or receding water over multiple ticks.
-- **Agent Reasoning**: Before the ML runs, 6 heuristic agents (e.g., Traffic Agent) adjust the "Digital Twin" parameters based on programmed rules.
-- **Optimization Strategy**: The ILP solver (OR-Tools) ensures that limited resources are never "double-counted" and are always sent to the zones where they will save the most lives based on ML predictions.
-
----
-
-## 🛡️ Three-Tier RBAC Architecture
-
-The platform enforces a strict Role-Based Access Control system to ensure data integrity during a crisis:
-
-| Tier | Role | Access Level | Key Permissions |
-| :--- | :--- | :--- | :--- |
-| **1** | **Admin** | Full Control | User management, Strategy configuration, What-if scenarios, Audit logs. |
-| **2** | **Operator** | Command | Live dashboard, Field reporting, Real-time risk monitoring. |
-| **3** | **Public** | Situational | Public notices, Simplified city-wide risk overview. |
-
----
-
-## 🛠️ Technical Stack
-
-- **Frontend**: React.js, Vite, Leaflet.js (Map visualization), Tailwind CSS.
-- **Backend**: FastAPI (Python), WebSockets (Real-time updates), Pydantic (Data validation).
-- **ML/Optimization**: Scikit-Learn, Google OR-Tools, Pandas, NumPy.
-- **Deployment**: Local dev server (npm/uvicorn), WebSocket broadcast architecture.
-
----
-
-## 📦 How to Run
+## Tech Stack
+### Frontend
+- React
+- Vite
+- Tailwind CSS
+- Leaflet / React-Leaflet
 
 ### Backend
-1. Navigate to `backend/`.
-2. Install dependencies: `pip install -r requirements.txt`.
-3. Run the server: `python main.py`.
-4. API will be live at `http://localhost:8000`.
+- Python
+- FastAPI
+- WebSockets
+- Uvicorn
 
-### Frontend
-1. Navigate to `frontend/`.
-2. Install dependencies: `npm install`.
-3. Start the dev server: `npm run dev`.
-4. Open `http://localhost:5173` in your browser.
+### Simulation / Intelligence
+- NetworkX
+- NumPy
+- Pandas
+- OR-Tools
+- Scikit-learn
 
----
+### Data Layer
+- Neo4j Community Edition
+- Redis Open Source
 
-## 📈 ML Implementation Details (Hackathon Segment)
+## How It Works
+1. A learner selects a disaster scenario (e.g. flood, earthquake)
+2. The simulation engine models how the event spreads across the city's infrastructure
+3. AI agents demonstrate real-time responses — rerouting traffic, balancing hospital load, allocating resources
+4. Students observe cascading failures and critical vulnerabilities on the live dashboard
+5. The platform generates AI-recommended response strategies with explanations
+6. Learners test different interventions using what-if analysis and compare outcomes
 
-**Why Random Forest?**
-- **Non-Linearity**: Crisis data is rarely linear (1+1 doesn't always equal 2 in disasters). RF handles these interactions out of the box.
-- **Uncertainty Tracking**: By analyzing the variance across 120 trees, we provide "Reliability Scores" for our predictions.
+## SDG Alignment
+This project aligns with:
+- **SDG 4:** Quality Education — Provides students and trainees with immersive, simulation-based disaster management education
+- **SDG 3:** Good Health and Well-being — Teaches effective emergency response to improve future healthcare outcomes
+- **SDG 11:** Sustainable Cities and Communities — Builds the next generation of urban planners equipped to design resilient cities
+- **SDG 13:** Climate Action — Educates learners on climate-related disaster risks and prepares them to develop adaptive strategies
 
-**The ILP Advantage**
-Instead of simple priority queues, our **Integer Linear Programming** solver looks at the *entire city* at once. It finds the "global optimum" for resource distribution, ensuring that saving a life in Zone A doesn't accidentally cause a catastrophe in Zone B due to lack of accessibility.
-
----
-
-## ⚖️ License
-Educational simulation project for hackathon purposes. Non-production / Demo only.
+## Future Scope
+- **Interactive Scenario Editor**: Tools for instructors to design custom disaster scenarios and infrastructure challenges
+- **Multiplayer Cooperative Mode**: Team-based simulation where students take on different roles (Traffic, Power, Medical) to solve a crisis together
+- **AI-Driven Reflection & Assessment**: Post-simulation analysis using LLMs to provide students with personalized feedback and critical thinking questions
+- **LMS Integration**: Seamless integration with platforms like Moodle and Canvas for curriculum tracking and assignment management
+- **Real-Time Data Injection**: Integration of live weather and environmental data to create "dynamic-difficulty" simulations
+- **Global Leaderboards**: Competitive learning tracks where schools and universities can compare their resilience strategies and outcomes

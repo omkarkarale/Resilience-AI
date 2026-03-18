@@ -641,7 +641,22 @@ class SimulationEngine:
 
         chain = []
         step = 0
-        dtype = disaster.type.value.title()
+
+        # Clean label for disaster type (grid_failure → "Grid Failure")
+        _DTYPE_LABELS = {
+            "flood": "Flood", "earthquake": "Earthquake",
+            "cyclone": "Cyclone", "grid_failure": "Grid Failure",
+        }
+        dtype = _DTYPE_LABELS.get(disaster.type.value, disaster.type.value.title())
+
+        def _names(items, limit=3):
+            """Return comma-joined short names, e.g. 'KEM Hospital, Sion Hospital +2 more'."""
+            short = [i.name.split(",")[0].split("(")[0].strip() for i in items[:limit]]
+            extra = len(items) - limit
+            result = ", ".join(short)
+            if extra > 0:
+                result += f" +{extra} more"
+            return result
 
         def add(source, target, description, icon):
             nonlocal step
@@ -664,26 +679,48 @@ class SimulationEngine:
             "🚨",
         )
 
-        # ── 2. Infrastructure Damage (always present when sim running) ──
-        damaged_infra = [i for i in self.infrastructure if i.damage > 20]
+        # ── 2. Infrastructure Damage — list specific facilities ──
         failed_infra = [i for i in self.infrastructure if i.status == InfraStatus.FAILED]
-        if damaged_infra or failed_infra:
+        damaged_infra = [i for i in self.infrastructure if i.damage > 20 and i.status != InfraStatus.FAILED]
+
+        failed_hospitals = [i for i in failed_infra if i.type == InfrastructureType.HOSPITAL]
+        failed_power = [i for i in failed_infra if i.type == InfrastructureType.POWER_STATION]
+        failed_fire = [i for i in failed_infra if i.type == InfrastructureType.FIRE_STATION]
+        failed_other = [i for i in failed_infra if i.type not in (
+            InfrastructureType.HOSPITAL, InfrastructureType.POWER_STATION, InfrastructureType.FIRE_STATION
+        )]
+
+        if failed_infra or damaged_infra:
+            parts = []
+            if failed_hospitals:
+                parts.append(f"Hospitals: {_names(failed_hospitals)}")
+            if failed_power:
+                parts.append(f"Power: {_names(failed_power)}")
+            if failed_fire:
+                parts.append(f"Fire: {_names(failed_fire)}")
+            if failed_other:
+                parts.append(f"{len(failed_other)} other facilities")
+            if not parts and damaged_infra:
+                parts.append(f"{_names(damaged_infra)} damaged")
+
+            desc = "; ".join(parts) if parts else f"{len(failed_infra)} failed, {len(damaged_infra)} damaged"
             add(
                 dtype,
                 "Infrastructure",
-                f"{len(failed_infra)} failed, {len(damaged_infra)} damaged facilities",
+                desc,
                 "🏗️",
             )
 
-        # ── 3. Road Network disruption ──
+        # ── 3. Road Network disruption — list specific roads ──
         compromised_roads = [r for r in self.roads if r.severity > 0.3]
         blocked_roads = [r for r in self.roads if r.severity >= 0.7]
         if compromised_roads:
-            source = "Infrastructure" if (damaged_infra or failed_infra) else dtype
+            source = "Infrastructure" if (failed_infra or damaged_infra) else dtype
+            road_names = _names(blocked_roads if blocked_roads else compromised_roads)
             add(
                 source,
                 "Road Network",
-                f"{len(blocked_roads)} blocked, {len(compromised_roads)} compromised routes",
+                f"{road_names} — {len(blocked_roads)} blocked, {len(compromised_roads)} compromised",
                 "🚧",
             )
 
@@ -692,61 +729,52 @@ class SimulationEngine:
             add(
                 "Road Network",
                 "Emergency Response",
-                f"Ambulance ETA increased to {self._dispatch_eta:.0f} min (normal: {BASE_ETA_MINUTES:.0f})",
+                f"Ambulance ETA {self._dispatch_eta:.0f} min (normal {BASE_ETA_MINUTES:.0f} min)",
                 "🚑",
             )
 
-        # ── 5. Hospital System overload ──
+        # ── 5. Hospital System overload — list specific hospitals ──
         overloaded_hospitals = [
             i for i in self.infrastructure
             if i.type == InfrastructureType.HOSPITAL and i.current_load > i.capacity * 0.6
         ]
         if overloaded_hospitals:
             source = "Emergency Response" if (compromised_roads and self._dispatch_eta > BASE_ETA_MINUTES * 1.2) else dtype
-            critical_count = sum(1 for h in overloaded_hospitals if h.current_load > h.capacity * 0.9)
-            add(
-                source,
-                "Hospital System",
-                f"{len(overloaded_hospitals)} overloaded ({critical_count} critical capacity)",
-                "🏥",
-            )
+            critical = [h for h in overloaded_hospitals if h.current_load > h.capacity * 0.9]
+            if critical:
+                desc = f"{_names(critical)} at critical capacity; {len(overloaded_hospitals)} total overloaded"
+            else:
+                desc = f"{_names(overloaded_hospitals)} overloaded ({len(overloaded_hospitals)} facilities)"
+            add(source, "Hospital System", desc, "🏥")
 
-        # ── 6. Power Grid stress ──
+        # ── 6. Power Grid stress — list specific stations ──
         grid_stress = self.agents["power"].state.get("grid_stress", 0)
-        failed_stations = [
+        ps_failed = [
             i for i in self.infrastructure
             if i.type == InfrastructureType.POWER_STATION and i.status == InfraStatus.FAILED
         ]
-        degraded_stations = [
+        ps_degraded = [
             i for i in self.infrastructure
             if i.type == InfrastructureType.POWER_STATION and i.status == InfraStatus.DEGRADED
         ]
-        if failed_stations or degraded_stations or grid_stress > 25:
-            source = "Infrastructure" if (damaged_infra or failed_infra) else dtype
-            add(
-                source,
-                "Power Grid",
-                f"Grid stress {grid_stress:.0f}% — {len(failed_stations)} offline, {len(degraded_stations)} degraded",
-                "⚡",
-            )
-            # Power → Hospital cascade
-            if overloaded_hospitals and (failed_stations or grid_stress > 50):
-                add(
-                    "Power Grid",
-                    "Hospital System",
-                    "Hospital backup power strained by grid failures",
-                    "🏥",
-                )
+        if ps_failed or ps_degraded or grid_stress > 25:
+            source = "Infrastructure" if (failed_infra or damaged_infra) else dtype
+            parts = []
+            if ps_failed:
+                parts.append(f"Offline: {_names(ps_failed)}")
+            if ps_degraded:
+                parts.append(f"Degraded: {_names(ps_degraded)}")
+            parts.append(f"Grid stress {grid_stress:.0f}%")
+            add(source, "Power Grid", "; ".join(parts), "⚡")
+
+            # Power → Hospital secondary cascade
+            if overloaded_hospitals and (ps_failed or grid_stress > 50):
+                add("Power Grid", "Hospital System", "Hospital backup power strained by grid failures", "🏥")
 
         # ── 7. Supply Chain disruption ──
         pending_deliveries = self.agents["logistics"].state.get("deliveries_pending", 0)
         if compromised_roads and pending_deliveries > 0:
-            add(
-                "Road Network",
-                "Supply Chain",
-                f"{pending_deliveries} relief deliveries delayed or rerouted",
-                "📦",
-            )
+            add("Road Network", "Supply Chain", f"{pending_deliveries} relief deliveries delayed or rerouted", "📦")
 
         # ── 8. Communication systems ──
         failed_comms = [
@@ -754,24 +782,28 @@ class SimulationEngine:
             if i.type == InfrastructureType.COMMUNICATIONS and i.status == InfraStatus.FAILED
         ]
         if failed_comms:
-            source = "Power Grid" if (failed_stations or grid_stress > 40) else "Infrastructure"
-            add(
-                source,
-                "Communications",
-                f"{len(failed_comms)} communication towers offline",
-                "📡",
-            )
+            source = "Power Grid" if (ps_failed or grid_stress > 40) else "Infrastructure"
+            add(source, "Communications", f"{_names(failed_comms)} offline", "📡")
 
-        # ── 9. Population displacement ──
+        # ── 9. Disaster-specific secondary events ──
+        if disaster.type == DisasterType.EARTHQUAKE:
+            collapsed = [i for i in self.infrastructure if i.damage > 60]
+            if collapsed:
+                add(dtype, "Structural Collapse", f"{_names(collapsed)} severe structural damage", "🏚️")
+        elif disaster.type == DisasterType.CYCLONE:
+            if any(z.flood_prone and z.risk_score > 40 for z in self.zones):
+                coastal = [z for z in self.zones if z.flood_prone and z.risk_score > 40]
+                add(dtype, "Storm Surge", f"{_names(coastal)} coastal zones at risk", "🌊")
+        elif disaster.type == DisasterType.GRID_FAILURE:
+            if ps_failed:
+                add("Power Grid", "Blackout", f"Cascading blackout — {_names(ps_failed)} offline", "🔌")
+
+        # ── 10. Population displacement ──
         high_risk_zones = [z for z in self.zones if z.risk_score > 50]
         if high_risk_zones and (overloaded_hospitals or compromised_roads):
+            zone_desc = _names(high_risk_zones)
             last_target = chain[-1].target if chain else dtype
-            add(
-                last_target,
-                "Population",
-                f"{len(high_risk_zones)} zones above 50% risk — mass displacement",
-                "👥",
-            )
+            add(last_target, "Population", f"{zone_desc} — {len(high_risk_zones)} zones, mass displacement", "👥")
 
         self.cascading_events = chain
 

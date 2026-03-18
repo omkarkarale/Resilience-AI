@@ -3,9 +3,11 @@ export default function CascadingFlow({ events = [] }) {
 
     const nodeColors = {
         'Flood': '#3b82f6', 'Earthquake': '#f59e0b', 'Cyclone': '#0ea5e9', 'Tsunami': '#2563eb',
+        'Grid Failure': '#eab308', 'Grid': '#eab308', 'Blackout': '#6b21a8',
         'Disaster': '#ef4444', 'Road': '#ef4444', 'Emergency': '#f97316', 'Casualty': '#f97316',
         'Hospital': '#a855f7', 'Power': '#eab308', 'Infrastructure': '#eab308',
         'Supply': '#06b6d4', 'Communications': '#8b5cf6', 'Population': '#f97316',
+        'Structural': '#dc2626', 'Storm': '#0284c7', 'Collapse': '#dc2626',
     };
 
     const getNodeColor = (name) => {
@@ -21,7 +23,7 @@ export default function CascadingFlow({ events = [] }) {
             background: 'var(--bg-surface)',
             border: '1px solid var(--border)',
             borderRadius: 8,
-            minWidth: 0,         /* crucial: let grid cell constrain us */
+            minWidth: 0,
             overflow: 'hidden',
         }}>
             <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--text-secondary)', marginBottom: 6 }}>
@@ -35,20 +37,23 @@ export default function CascadingFlow({ events = [] }) {
                 overflowX: 'auto',
                 overflowY: 'hidden',
                 paddingBottom: 4,
-                /* thin scrollbar */
                 scrollbarWidth: 'thin',
             }}>
                 {events.map((event, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                         {/* Source Node */}
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: 4,
-                            padding: '3px 8px',
-                            background: 'var(--bg-surface-raised)',
-                            border: `1px solid ${getNodeColor(event.source)}40`,
-                            borderRadius: 5,
-                            fontSize: 9,
-                        }}>
+                        <div
+                            title={event.description}
+                            style={{
+                                display: 'flex', alignItems: 'center', gap: 4,
+                                padding: '3px 8px',
+                                background: 'var(--bg-surface-raised)',
+                                border: `1px solid ${getNodeColor(event.source)}40`,
+                                borderRadius: 5,
+                                fontSize: 9,
+                                cursor: 'default',
+                            }}
+                        >
                             <div style={{
                                 width: 5, height: 5, borderRadius: '50%',
                                 background: getNodeColor(event.source), flexShrink: 0,
@@ -67,14 +72,18 @@ export default function CascadingFlow({ events = [] }) {
 
                         {/* If it's the LAST event, also render its TARGET node */}
                         {i === events.length - 1 && (
-                            <div style={{
-                                display: 'flex', alignItems: 'center', gap: 4,
-                                padding: '3px 8px',
-                                background: 'var(--bg-surface-raised)',
-                                border: `1px solid ${getNodeColor(event.target)}40`,
-                                borderRadius: 5,
-                                fontSize: 9,
-                            }}>
+                            <div
+                                title={event.description}
+                                style={{
+                                    display: 'flex', alignItems: 'center', gap: 4,
+                                    padding: '3px 8px',
+                                    background: 'var(--bg-surface-raised)',
+                                    border: `1px solid ${getNodeColor(event.target)}40`,
+                                    borderRadius: 5,
+                                    fontSize: 9,
+                                    cursor: 'default',
+                                }}
+                            >
                                 <div style={{
                                     width: 5, height: 5, borderRadius: '50%',
                                     background: getNodeColor(event.target), flexShrink: 0,

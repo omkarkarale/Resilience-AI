@@ -49,27 +49,6 @@ def create_token(user_id: str, role: str, department: Optional[str] = None) -> s
 
 
 def decode_token(token: str) -> dict:
-    # ── Bypassing for simplified "No Verification" mode ──
-    # If the token from frontend is an email or our mock admin token, return a bypass payload.
-    if "@" in token or token == "mock-token-admin":
-        from seed_store import get_user_by_email, get_user
-        # Try to find user by email (our new simplified token)
-        user = get_user_by_email(token) or get_user(token)
-        if user:
-            return {
-                "sub": user.id,
-                "role": user.role.value,
-                "department": user.department.value if user.department else None,
-                "bypass": True
-            }
-        # Fallback for unknown emails (per user request: "no verification")
-        return {
-            "sub": "unknown",
-            "role": "admin" if "admin" in token else "operator",
-            "department": "medical" if "medical" in token else None,
-            "bypass": True
-        }
-
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
@@ -90,20 +69,6 @@ async def get_current_user(
     payload = decode_token(credentials.credentials)
     from seed_store import get_user
     user = get_user(payload["sub"])
-    
-    # Handle bypass/mock tokens for "No Verification" mode
-    if user is None and payload.get("bypass"):
-        return UserInDB(
-            id=payload["sub"],
-            name=payload["sub"].split("@")[0].title() if "@" in payload["sub"] else "Mock User",
-            email=payload["sub"] if "@" in payload["sub"] else "mock@resilience.ai",
-            hashed_password="",
-            role=UserRole(payload["role"]),
-            department=payload.get("department"),
-            is_active=True,
-            created_at=datetime.utcnow().isoformat()
-        )
-        
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
     if not user.is_active:
@@ -120,20 +85,6 @@ async def require_auth(
     payload = decode_token(credentials.credentials)
     from seed_store import get_user
     user = get_user(payload["sub"])
-    
-    # Handle bypass/mock tokens for "No Verification" mode
-    if user is None and payload.get("bypass"):
-        return UserInDB(
-            id=payload["sub"],
-            name=payload["sub"].split("@")[0].title() if "@" in payload["sub"] else "Mock User",
-            email=payload["sub"] if "@" in payload["sub"] else "mock@resilience.ai",
-            hashed_password="",
-            role=UserRole(payload["role"]),
-            department=payload.get("department"),
-            is_active=True,
-            created_at=datetime.utcnow().isoformat()
-        )
-
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
     if not user.is_active:
