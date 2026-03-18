@@ -7,40 +7,35 @@ const STYLE = `
     90% { opacity: 0.1; }
     100% { transform: translateY(800px); opacity: 0; }
 }
-
 @keyframes pulseGlow {
     0%, 100% { box-shadow: 0 0 0px #06b6d4, inset 0 0 0px rgba(6, 182, 212, 0); }
     50% { box-shadow: 0 0 12px #06b6d4, inset 0 0 12px rgba(6, 182, 212, 0.4); }
 }
-
 @keyframes panelEntry {
     0% { opacity: 0; transform: translateX(12px); }
     100% { opacity: 1; transform: translateX(0); }
 }
-
 @keyframes numberPop {
     0% { transform: scale(1); }
     50% { transform: scale(1.15); }
     100% { transform: scale(1); }
 }
 
+/* ══ LIGHT MODE (default) ══ */
 .whatif-root {
-    background-color: #0d1117;
-    background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
-    background-size: 20px 20px;
-    color: #e2e8f0;
     font-family: 'Inter', system-ui, sans-serif;
     position: relative;
     overflow: hidden;
     height: 100%;
     min-height: 600px;
     border-radius: 4px;
-    border: 1px solid rgba(6, 182, 212, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.09);
     display: flex;
     flex-direction: column;
     animation: panelEntry 0.3s ease-out forwards;
+    background-color: #ffffff;
+    color: #0f172a;
 }
-
 .whatif-root::after {
     content: '';
     position: absolute;
@@ -50,13 +45,11 @@ const STYLE = `
     pointer-events: none;
     z-index: 10;
 }
-
 .whatif-header {
     padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(13, 17, 23, 0.9);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    background: #f8fafc;
 }
-
 .whatif-title {
     font-size: 11px;
     font-weight: 600;
@@ -67,7 +60,6 @@ const STYLE = `
     align-items: center;
     gap: 8px;
 }
-
 .whatif-title::before {
     content: '';
     display: inline-block;
@@ -76,7 +68,6 @@ const STYLE = `
     border-radius: 50%;
     box-shadow: 0 0 8px #06b6d4;
 }
-
 .whatif-body {
     flex: 1;
     overflow-y: auto;
@@ -85,86 +76,52 @@ const STYLE = `
     flex-direction: column;
     gap: 16px;
 }
-
 .section-label {
     font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #e2e8f0;
-    opacity: 0.45;
+    color: #64748b;
     margin-bottom: 8px;
     padding-bottom: 4px;
 }
-
 .action-card {
     display: flex;
     align-items: center;
     padding: 10px 12px;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.06);
+    background: #f8fafc;
+    border: 1px solid rgba(0, 0, 0, 0.07);
     border-radius: 4px;
     cursor: pointer;
-    transition: border-color 0.2s ease, background 0.2s ease, border-left 0.2s ease;
+    transition: border-color 0.2s ease, background 0.2s ease;
     margin-bottom: 6px;
 }
-
-.action-card:hover {
-    background: rgba(255,255,255,0.02);
-}
-
+.action-card:hover { background: rgba(0, 0, 0, 0.03); }
 .action-card.selected {
-    background: linear-gradient(90deg, rgba(6,182,212,0.04) 0%, transparent 100%);
-    border-color: rgba(255,255,255,0.06);
-    border-left: 3px solid #06b6d4;
+    background: linear-gradient(90deg, rgba(6,182,212,0.06) 0%, transparent 100%);
+    border-color: rgba(6,182,212,0.4) !important;
+    border-left: 3px solid #06b6d4 !important;
 }
-
 .action-icon {
     margin-right: 12px;
     width: 22px; height: 22px;
     display: flex; align-items: center; justify-content: center;
-    color: #4a5568;
+    color: #94a3b8;
     transition: color 0.2s ease;
 }
-
-.action-card.selected .action-icon {
-    color: var(--card-accent, #06b6d4);
-}
-
-.action-info {
-    flex: 1;
-}
-
-.action-name {
-    font-size: 12px;
-    font-weight: 600;
-    color: #cbd5e1;
-    margin-bottom: 2px;
-}
-
-.action-card.selected .action-name {
-    color: #e2e8f0;
-}
-
-.action-desc {
-    font-size: 10px;
-    color: #64748b;
-    line-height: 1.2;
-    font-weight: 400;
-}
-
+.action-card.selected .action-icon { color: var(--card-accent, #06b6d4) !important; }
+.action-info { flex: 1; }
+.action-name { font-size: 12px; font-weight: 600; color: #0f172a; margin-bottom: 2px; }
+.action-card.selected .action-name { color: #0f172a; }
+.action-desc { font-size: 10px; color: #64748b; line-height: 1.2; font-weight: 400; }
 .action-radio {
     width: 14px; height: 14px;
-    border: 1px solid rgba(255,255,255,0.15);
+    border: 1px solid rgba(0, 0, 0, 0.18);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s ease;
 }
-
-.action-card.selected .action-radio {
-    border-color: #06b6d4;
-}
-
+.action-card.selected .action-radio { border-color: #06b6d4 !important; }
 .action-card.selected .action-radio::after {
     content: '';
     width: 6px; height: 6px;
@@ -172,7 +129,6 @@ const STYLE = `
     border-radius: 50%;
     box-shadow: 0 0 4px #06b6d4;
 }
-
 .stepper-container {
     display: flex;
     align-items: center;
@@ -180,11 +136,10 @@ const STYLE = `
     background: transparent;
     padding: 8px 12px 4px 12px;
 }
-
 .stepper-btn {
     width: 32px; height: 32px;
     background: transparent;
-    border: 1px solid rgba(6,182,212,0.3);
+    border: 1px solid rgba(6, 182, 212, 0.4);
     border-radius: 50%;
     color: #06b6d4;
     font-family: inherit;
@@ -193,125 +148,116 @@ const STYLE = `
     cursor: pointer;
     transition: all 0.15s;
 }
-
 .stepper-btn:hover:not(:disabled) {
     background: rgba(6, 182, 212, 0.12);
     box-shadow: 0 0 8px rgba(6, 182, 212, 0.4);
 }
-
-.stepper-btn:disabled {
-    opacity: 0.3; cursor: not-allowed;
-    border-color: rgba(255,255,255,0.1);
-    color: #64748b;
-}
-
+.stepper-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 .stepper-value {
     font-family: 'JetBrains Mono', 'Courier New', monospace;
-    font-size: 2rem;
-    font-weight: 400;
+    font-size: 2rem; font-weight: 400;
     color: #06b6d4;
     letter-spacing: 0.1em;
-    min-width: 60px;
-    text-align: center;
-    display: inline-block;
+    min-width: 60px; text-align: center; display: inline-block;
 }
-
-.stepper-value.pop {
-    animation: numberPop 0.15s ease-out;
-}
-
+.stepper-value.pop { animation: numberPop 0.15s ease-out; }
 .capacity-info {
     display: flex; justify-content: space-between;
-    font-size: 9px; color: #64748b; font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 9px; color: #64748b;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
     margin-top: 12px; margin-bottom: 4px; text-transform: uppercase;
 }
-
 .capacity-track {
-    height: 3px;
-    background: rgba(255,255,255,0.08);
-    overflow: visible;
-    position: relative;
-    width: 100%;
+    height: 3px; background: rgba(0, 0, 0, 0.08);
+    overflow: visible; position: relative; width: 100%;
 }
-
 .capacity-fill {
-    height: 100%;
-    background: #06b6d4;
-    transition: width 0.4s ease;
-    box-shadow: 0 0 6px #06b6d4;
+    height: 100%; background: #06b6d4;
+    transition: width 0.4s ease; box-shadow: 0 0 6px #06b6d4;
 }
-
 .impact-preview {
-    border: 1px dashed rgba(255, 255, 255, 0.15);
-    border-radius: 4px;
-    padding: 10px;
-    background: rgba(0, 0, 0, 0.15);
-    opacity: 0.4;
+    border: 1px dashed rgba(0, 0, 0, 0.15);
+    border-radius: 4px; padding: 10px;
+    background: rgba(0, 0, 0, 0.02); opacity: 0.8;
 }
-
 .impact-row {
     display: flex; justify-content: space-between; align-items: center;
-    font-size: 10px; color: #94a3b8; padding: 4px 0;
-    border-bottom: 1px dotted rgba(255,255,255,0.05);
+    font-size: 10px; color: #64748b; padding: 4px 0;
+    border-bottom: 1px dotted rgba(0, 0, 0, 0.08);
 }
-
 .impact-row:last-child { border-bottom: none; }
-
 .impact-val { font-family: 'JetBrains Mono', 'Courier New', monospace; font-weight: 400; }
-
-.run-footer {
-    padding: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    background: transparent;
-}
-
+.run-footer { padding: 16px; border-top: 1px solid rgba(0, 0, 0, 0.07); }
 .run-btn {
-    width: 100%;
-    padding: 12px;
-    border-radius: 4px;
+    width: 100%; padding: 12px; border-radius: 4px;
     font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
     border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: all 0.2s;
-    font-family: 'Inter', system-ui, sans-serif;
+    transition: all 0.2s; font-family: 'Inter', system-ui, sans-serif;
 }
-
 .run-btn.active {
     background: linear-gradient(135deg, #0891b2, #06b6d4);
-    color: #fff;
-    animation: pulseGlow 2s infinite;
-    border: 1px solid transparent; /* Required for sizing match */
+    color: #fff; animation: pulseGlow 2s infinite; border: 1px solid transparent;
 }
-
-.run-btn.active:hover {
-    filter: brightness(1.1);
-}
-
+.run-btn.active:hover { filter: brightness(1.1); }
 .run-btn.disabled {
+    background: rgba(0, 0, 0, 0.05); color: rgba(0, 0, 0, 0.35);
+    border: 1px dashed rgba(0, 0, 0, 0.15); cursor: not-allowed;
+}
+.results-box {
+    margin-top: 16px; border: 1px solid rgba(6, 182, 212, 0.3);
+    background: rgba(6, 182, 212, 0.04); border-radius: 4px; padding: 12px;
+}
+.res-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.res-card { padding: 8px; border-radius: 4px; border: 1px solid rgba(0,0,0,0.06); background: #fff; }
+.res-card.before { background: rgba(239,68,68,0.04); border-left: 2px solid #ef4444; }
+.res-card.after  { background: rgba(34,197,94,0.04);  border-left: 2px solid #22c55e; }
+.res-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.res-val   { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 16px; font-weight: 400; margin-top: 2px; }
+
+/* ══ DARK MODE — keyed to [data-theme="dark"] on <html> (same as rest of app) ══ */
+[data-theme="dark"] .whatif-root {
+    background-color: #0d1117;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    color: #e2e8f0;
+    border-color: rgba(6, 182, 212, 0.15);
+}
+[data-theme="dark"] .whatif-header {
+    background: rgba(13, 17, 23, 0.9);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .section-label { color: rgba(226, 232, 240, 0.45); }
+[data-theme="dark"] .action-card {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.06);
+}
+[data-theme="dark"] .action-card:hover { background: rgba(255, 255, 255, 0.02); }
+[data-theme="dark"] .action-card.selected {
+    background: linear-gradient(90deg, rgba(6,182,212,0.04) 0%, transparent 100%);
+}
+[data-theme="dark"] .action-icon  { color: #4a5568; }
+[data-theme="dark"] .action-name  { color: #cbd5e1; }
+[data-theme="dark"] .action-card.selected .action-name { color: #e2e8f0; }
+[data-theme="dark"] .action-desc  { color: #64748b; }
+[data-theme="dark"] .action-radio { border-color: rgba(255, 255, 255, 0.15); }
+[data-theme="dark"] .stepper-btn  { border-color: rgba(6, 182, 212, 0.3); }
+[data-theme="dark"] .capacity-info { color: #64748b; }
+[data-theme="dark"] .capacity-track { background: rgba(255, 255, 255, 0.08); }
+[data-theme="dark"] .impact-preview {
+    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.15); opacity: 0.4;
+}
+[data-theme="dark"] .impact-row { color: #94a3b8; border-bottom-color: rgba(255, 255, 255, 0.05); }
+[data-theme="dark"] .run-footer  { border-top-color: rgba(255, 255, 255, 0.08); }
+[data-theme="dark"] .run-btn.disabled {
     background: rgba(255, 255, 255, 0.04);
     color: rgba(255, 255, 255, 0.3);
     border: 1px dashed rgba(255, 255, 255, 0.15);
-    cursor: not-allowed;
 }
-
-/* ── Result display overrides ── */
-.results-box {
-    margin-top: 16px;
-    border: 1px solid rgba(6, 182, 212, 0.3);
-    background: rgba(6, 182, 212, 0.05);
-    border-radius: 4px;
-    padding: 12px;
-}
-.res-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 6px;
-}
-.res-card {
-    padding: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05);
-}
-.res-card.before { background: rgba(239, 68, 68, 0.05); border-left: 2px solid #ef4444; }
-.res-card.after { background: rgba(34, 197, 94, 0.05); border-left: 2px solid #22c55e; }
-.res-label { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-.res-val { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 16px; font-weight: 400; margin-top: 2px; }
+[data-theme="dark"] .results-box  { background: rgba(6,182,212,0.05); border-color: rgba(6,182,212,0.3); }
+[data-theme="dark"] .res-card     { background: transparent; border-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .res-label    { color: #64748b; }
 `;
 
 function AmbulanceIcon() {
@@ -360,7 +306,7 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
             description: 'Send additional units to increase hospital capacity',
             unit: 'units',
             max: 50,
-            color: '#ef4444' // critical red
+            color: '#ef4444'
         },
         {
             action: 'deploy_generator',
@@ -369,7 +315,7 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
             description: 'Deploy backup generators to restore power grid',
             unit: 'generators',
             max: 20,
-            color: '#f59e0b' // warning amber
+            color: '#f59e0b'
         },
         {
             action: 'open_shelter',
@@ -378,10 +324,10 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
             description: 'Open emergency shelters for displaced population',
             unit: 'shelters',
             max: 30,
-            color: '#22c55e' // operational green
+            color: '#22c55e'
         },
     ];
-    
+
     const [selectedAction, setSelectedAction] = useState('add_ambulances');
     const [amount, setAmount] = useState(3);
     const [result, setResult] = useState(null);
@@ -394,7 +340,6 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
         setPopAnim(true);
     };
 
-    // Remove animation class after it plays so it can trigger again
     useEffect(() => {
         if (popAnim) {
             const timer = setTimeout(() => setPopAnim(false), 150);
@@ -414,7 +359,7 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
     return (
         <div className="whatif-root">
             <style>{STYLE}</style>
-            
+
             <div className="whatif-header">
                 <div className="whatif-title">SIMULATION INTERVENTIONS</div>
             </div>
@@ -428,10 +373,10 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
                             key={int.action}
                             className={`action-card ${selectedAction === int.action ? 'selected' : ''}`}
                             style={{ '--card-accent': int.color }}
-                            onClick={() => { 
-                                setSelectedAction(int.action); 
-                                setAmount(Math.min(amount, int.max)); 
-                                setResult(null); 
+                            onClick={() => {
+                                setSelectedAction(int.action);
+                                setAmount(Math.min(amount, int.max));
+                                setResult(null);
                             }}
                         >
                             <div className="action-icon">{int.icon}</div>
@@ -448,16 +393,16 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
                 <div>
                     <div className="section-label">ALLOCATE RESOURCES</div>
                     <div className="stepper-container">
-                        <button 
-                            className="stepper-btn" 
+                        <button
+                            className="stepper-btn"
                             onClick={() => handleAmountChange(Math.max(1, amount - 1))}
                             disabled={amount <= 1}
                         >−</button>
                         <div className={`stepper-value ${popAnim ? 'pop' : ''}`}>
                             {amount.toString().padStart(2, '0')}
                         </div>
-                        <button 
-                            className="stepper-btn" 
+                        <button
+                            className="stepper-btn"
                             onClick={() => handleAmountChange(Math.min(selectedIntervention.max, amount + 1))}
                             disabled={amount >= (selectedIntervention?.max || 10)}
                         >+</button>
@@ -467,8 +412,8 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
                         <span style={{ color: '#06b6d4' }}>{amount} OF {selectedIntervention?.max || 10} AVAIL</span>
                     </div>
                     <div className="capacity-track">
-                        <div 
-                            className="capacity-fill" 
+                        <div
+                            className="capacity-fill"
                             style={{ width: `${(amount / (selectedIntervention?.max || 10)) * 100}%` }}
                         />
                     </div>
@@ -510,7 +455,7 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
                                     <div className="res-val" style={{ color: '#22c55e' }}>{result.after?.overall_risk?.toFixed(1)}%</div>
                                 </div>
                             </div>
-                            <div className="res-card" style={{ background: 'rgba(6, 182, 212, 0.1)', border: '1px solid rgba(6,182,212,0.3)', textAlign: 'center' }}>
+                            <div className="res-card" style={{ background: 'rgba(6, 182, 212, 0.08)', border: '1px solid rgba(6,182,212,0.3)', textAlign: 'center' }}>
                                 <div className="res-label" style={{ color: '#06b6d4' }}>RISK REDUCTION</div>
                                 <div className="res-val" style={{ color: '#06b6d4', fontSize: 18 }}>↓ {result.improvement?.risk_reduction?.toFixed(1)}%</div>
                             </div>
@@ -525,7 +470,7 @@ export default function WhatIfPanel({ onRunWhatIf, running }) {
                     disabled={!running || loading || !selectedAction}
                     className={`run-btn ${(!running || loading || !selectedAction) ? 'disabled' : 'active'}`}
                 >
-                    {loading ? 'SIMULATING...' : (!running ? 'RUN WHAT-IF SCENARIO' : 'RUN WHAT-IF SCENARIO')}
+                    {loading ? 'SIMULATING...' : 'RUN WHAT-IF SCENARIO'}
                 </button>
             </div>
         </div>

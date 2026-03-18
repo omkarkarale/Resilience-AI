@@ -766,9 +766,21 @@ class SimulationEngine:
             )
             self.infrastructure.append(new_shelter)
 
-        # Artificially lower overall risk immediately to reflect the intervention
+        # Apply risk reduction scaled by action type and amount
+        if intervention.action == "add_ambulances":
+            # Ambulances reduce hospital load → each unit cuts risk by 0.8%, capped at 15%
+            reduction_factor = min(intervention.amount * 0.008, 0.15)
+        elif intervention.action == "deploy_generator":
+            # Generators restore power → each unit cuts infrastructure risk by 1.0%, capped at 20%
+            reduction_factor = min(intervention.amount * 0.010, 0.20)
+        elif intervention.action == "open_shelter":
+            # Shelters absorb displaced population → each unit cuts displacement risk by 0.7%, capped at 12%
+            reduction_factor = min(intervention.amount * 0.007, 0.12)
+        else:
+            reduction_factor = 0.05  # fallback: generic 5% reduction
+
         for z in self.zones:
-            z.risk_score = max(0, z.risk_score * 0.85)
+            z.risk_score = max(0, z.risk_score * (1 - reduction_factor))
 
         # Compute after metrics
         after_state = self.get_state()
