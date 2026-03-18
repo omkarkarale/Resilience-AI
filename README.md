@@ -22,7 +22,7 @@ Resilience AI solves this by transforming complex disaster management concepts i
 - **Live Risk Dashboard** — Visual, real-time display of infrastructure health, risk zones, and resource availability for intuitive learning
 - **What-If Scenario Testing** — Students can modify variables, deploy interventions, and compare outcomes to learn decision-making under pressure
 - **Cascading Failure Analysis** — Highlights critical failure points across the city, teaching learners to identify vulnerabilities in urban systems
-- **Strategy Recommendation Engine** — AI-generated response plans with explanations, helping students understand trade-offs in emergency management.
+- **Strategy Recommendation Engine** — AI-generated response plans with explanations, helping students understand trade-offs in emergency management
 
 ## Tech Stack
 ### Frontend
