@@ -210,7 +210,7 @@ function CommandCenter() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '8px', flex: 1, minHeight: 0 }}>
           
           {/* Left Column — Map + Timeline + Cascade */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minHeight: 0, minWidth: 0 }}>
             {/* Map — takes all remaining vertical space */}
             <div className="glass-card" style={{ flex: 1, position: 'relative', overflow: 'hidden', minHeight: '480px', borderRadius: 10 }}>
               <CityMap state={state} theme={theme} userRole={userRole} userDepartment={userDepartment} />

@@ -633,85 +633,147 @@ class SimulationEngine:
         return state
 
     def _compute_cascading_events(self):
-        """Build the cascading failure chain iteratively over time."""
+        """Rebuild the full cascading failure chain each tick from live state."""
         disaster = self.disaster
         if not disaster:
+            self.cascading_events = []
             return
 
-        existing_pairs = {(e.source, e.target) for e in self.cascading_events}
+        chain = []
+        step = 0
+        dtype = disaster.type.value.title()
 
-        def add_event(source, target, description, icon, tick_override=None):
-            if (source, target) not in existing_pairs:
-                event_tick = tick_override if tick_override is not None else self.tick
-                self.cascading_events.append(CascadingEvent(
-                    step=len(self.cascading_events) + 1,
-                    source=source,
-                    target=target,
-                    description=description,
-                    icon=icon,
-                    tick=event_tick
-                ))
-                existing_pairs.add((source, target))
+        def add(source, target, description, icon):
+            nonlocal step
+            step += 1
+            chain.append(CascadingEvent(
+                step=step, source=source, target=target,
+                description=description, icon=icon, tick=self.tick,
+            ))
 
-        # Always record the initial disaster as the root at tick 1 (or current if just started)
-        add_event(
-            "Event",
-            disaster.type.value.title(),
-            f"{disaster.type.value.title()} disaster triggered in {disaster.epicenter_zone}",
+        # ── 1. Root: Disaster event ──
+        epicenter_name = disaster.epicenter_zone
+        for z in self.zones:
+            if z.id == disaster.epicenter_zone:
+                epicenter_name = z.name
+                break
+        add(
+            "Disaster",
+            dtype,
+            f"{dtype} ({disaster.intensity:.0f}%) strikes {epicenter_name}",
             "🚨",
-            tick_override=1 if self.tick >= 1 else None
         )
 
-        blocked_roads = [r for r in self.roads if r.blocked]
-        if blocked_roads:
-            add_event(
-                disaster.type.value.title(),
-                "Road Network",
-                f"{len(blocked_roads)} road(s) blocked/closed",
-                "🚧"
+        # ── 2. Infrastructure Damage (always present when sim running) ──
+        damaged_infra = [i for i in self.infrastructure if i.damage > 20]
+        failed_infra = [i for i in self.infrastructure if i.status == InfraStatus.FAILED]
+        if damaged_infra or failed_infra:
+            add(
+                dtype,
+                "Infrastructure",
+                f"{len(failed_infra)} failed, {len(damaged_infra)} damaged facilities",
+                "🏗️",
             )
-            add_event(
+
+        # ── 3. Road Network disruption ──
+        compromised_roads = [r for r in self.roads if r.severity > 0.3]
+        blocked_roads = [r for r in self.roads if r.severity >= 0.7]
+        if compromised_roads:
+            source = "Infrastructure" if (damaged_infra or failed_infra) else dtype
+            add(
+                source,
+                "Road Network",
+                f"{len(blocked_roads)} blocked, {len(compromised_roads)} compromised routes",
+                "🚧",
+            )
+
+        # ── 4. Emergency Response delays ──
+        if compromised_roads and self._dispatch_eta > BASE_ETA_MINUTES * 1.2:
+            add(
                 "Road Network",
                 "Emergency Response",
-                "Travel times increased due to route compromise",
-                "🚑"
+                f"Ambulance ETA increased to {self._dispatch_eta:.0f} min (normal: {BASE_ETA_MINUTES:.0f})",
+                "🚑",
             )
 
-        # Hospital system pressure
-        overloaded = [i for i in self.infrastructure
-                      if i.type == InfrastructureType.HOSPITAL and i.current_load > i.capacity * 0.85]
-        if overloaded:
-            # Connect from Emergency Response if possible, otherwise Casualty Surge
-            source = "Emergency Response" if blocked_roads else "Casualty Surge"
-            add_event(
+        # ── 5. Hospital System overload ──
+        overloaded_hospitals = [
+            i for i in self.infrastructure
+            if i.type == InfrastructureType.HOSPITAL and i.current_load > i.capacity * 0.6
+        ]
+        if overloaded_hospitals:
+            source = "Emergency Response" if (compromised_roads and self._dispatch_eta > BASE_ETA_MINUTES * 1.2) else dtype
+            critical_count = sum(1 for h in overloaded_hospitals if h.current_load > h.capacity * 0.9)
+            add(
                 source,
                 "Hospital System",
-                f"{len(overloaded)} facilities nearing critical capacity",
-                "🏥"
+                f"{len(overloaded_hospitals)} overloaded ({critical_count} critical capacity)",
+                "🏥",
             )
 
-        # Power Grid pressure
+        # ── 6. Power Grid stress ──
         grid_stress = self.agents["power"].state.get("grid_stress", 0)
-        failed_stations = [i for i in self.infrastructure
-                           if i.type == InfrastructureType.POWER_STATION and i.status == InfraStatus.FAILED]
-        if failed_stations or (overloaded and grid_stress > 40):
-            source = "Hospital System" if overloaded else "Infrastructure Damage"
-            add_event(
+        failed_stations = [
+            i for i in self.infrastructure
+            if i.type == InfrastructureType.POWER_STATION and i.status == InfraStatus.FAILED
+        ]
+        degraded_stations = [
+            i for i in self.infrastructure
+            if i.type == InfrastructureType.POWER_STATION and i.status == InfraStatus.DEGRADED
+        ]
+        if failed_stations or degraded_stations or grid_stress > 25:
+            source = "Infrastructure" if (damaged_infra or failed_infra) else dtype
+            add(
                 source,
                 "Power Grid",
-                f"Grid stress at {grid_stress:.0f}% ({len(failed_stations)} failures)",
-                "⚡"
+                f"Grid stress {grid_stress:.0f}% — {len(failed_stations)} offline, {len(degraded_stations)} degraded",
+                "⚡",
             )
+            # Power → Hospital cascade
+            if overloaded_hospitals and (failed_stations or grid_stress > 50):
+                add(
+                    "Power Grid",
+                    "Hospital System",
+                    "Hospital backup power strained by grid failures",
+                    "🏥",
+                )
 
-        # Supply chain
+        # ── 7. Supply Chain disruption ──
         pending_deliveries = self.agents["logistics"].state.get("deliveries_pending", 0)
-        if blocked_roads and pending_deliveries > 0:
-            add_event(
+        if compromised_roads and pending_deliveries > 0:
+            add(
                 "Road Network",
                 "Supply Chain",
-                f"{pending_deliveries} logistic deliveries delayed",
-                "📦"
+                f"{pending_deliveries} relief deliveries delayed or rerouted",
+                "📦",
             )
+
+        # ── 8. Communication systems ──
+        failed_comms = [
+            i for i in self.infrastructure
+            if i.type == InfrastructureType.COMMUNICATIONS and i.status == InfraStatus.FAILED
+        ]
+        if failed_comms:
+            source = "Power Grid" if (failed_stations or grid_stress > 40) else "Infrastructure"
+            add(
+                source,
+                "Communications",
+                f"{len(failed_comms)} communication towers offline",
+                "📡",
+            )
+
+        # ── 9. Population displacement ──
+        high_risk_zones = [z for z in self.zones if z.risk_score > 50]
+        if high_risk_zones and (overloaded_hospitals or compromised_roads):
+            last_target = chain[-1].target if chain else dtype
+            add(
+                last_target,
+                "Population",
+                f"{len(high_risk_zones)} zones above 50% risk — mass displacement",
+                "👥",
+            )
+
+        self.cascading_events = chain
 
     def get_state(self) -> SimulationState:
         """Get current simulation state including decision-support data."""
