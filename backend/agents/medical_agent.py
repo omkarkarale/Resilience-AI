@@ -37,13 +37,19 @@ class MedicalAgent(BaseAgent):
         self.state["triaged"] = int(total_injured * 0.7)  # pyre-ignore
 
         if total_injured > 0 and hospitals:
-            per_hospital = total_injured // max(len(hospitals), 1)  # pyre-ignore
-            for hosp in hospitals:
+            epicenter = next((z for z in zones if z.id == disaster.epicenter_zone), None)
+            if epicenter:
+                elat, elng = epicenter.center[0], epicenter.center[1]
+                hospitals.sort(key=lambda h: ((h.lat - elat)**2 + (h.lng - elng)**2))
+
+            total_weights = sum([len(hospitals) - i for i in range(len(hospitals))])
+            for i, hosp in enumerate(hospitals):
                 if hosp.status == InfraStatus.FAILED:
                     hosp.current_load = 0
                     continue
 
-                incoming = per_hospital + random.randint(0, int(per_hospital * 0.2) + 2)
+                weight = (len(hospitals) - i) / max(1, total_weights)
+                incoming = int(total_injured * weight) + random.randint(0, 5)
                 
                 # Simulate patient treatment/discharge (5-10% of capacity per tick)
                 discharge_rate = random.uniform(0.05, 0.10)
@@ -84,10 +90,21 @@ class MedicalAgent(BaseAgent):
         if total_injured > 100:
             high_risk_zones = [z.name for z in zones if z.risk_score > 50]
             zone_str = ", ".join(high_risk_zones[:3]) if high_risk_zones else "multiple districts"
+            dtype = disaster.type.value
+            
+            if dtype == "flood":
+                trauma_type = "waterborne hazard exposures and injuries"
+            elif dtype == "earthquake":
+                trauma_type = "blunt trauma and crush injuries"
+            elif dtype == "cyclone":
+                trauma_type = "debris impacts and severe weather injuries"
+            else:
+                trauma_type = "casualties"
+
             recommendations.append(AgentRecommendation(
                 agent=self.name,
                 action=f"Deploy {max(3, total_injured // 200)} mobile field medical units",
-                reason=f"{total_injured:,} estimated casualties across {len(high_risk_zones)} affected districts. "
+                reason=f"{total_injured:,} estimated {trauma_type} across {len(high_risk_zones)} affected districts. "
                        f"Hospital system approaching saturation.",
                 affected_zone=zone_str,
                 confidence=87,

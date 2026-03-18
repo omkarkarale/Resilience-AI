@@ -49,12 +49,23 @@ class TrafficAgent(BaseAgent):
                     road.status = InfraStatus.OPERATIONAL
 
         if blocked_count > 0:
-            affected_zone = ", ".join(sorted(list(set(z.name for z in zones if z.hazard_intensity > 50)))[:3]) or "Mumbai"
+            dtype = disaster.type.value
+            if dtype == "flood":
+                dmg_type = "flooded and impassable"
+            elif dtype == "earthquake":
+                dmg_type = "collapsed or severely cracked"
+            elif dtype == "cyclone":
+                dmg_type = "blocked by fallen trees and debris"
+            else:
+                dmg_type = "severely damaged or closed"
+
+            high_hazard = sorted([z for z in zones if z.hazard_intensity > 50], key=lambda z: -z.hazard_intensity)
+            affected_zone = ", ".join(z.name for z in high_hazard[:3]) or "Mumbai"
             recommendations.append(AgentRecommendation(
                 agent=self.name,
                 action=f"Reroute traffic via alternate corridors — {blocked_count} road(s) closed",
-                reason=f"{blocked_count} critical road(s) severely damaged: {', '.join(blocked_names[:3])}. "
-                       f"Disaster-level road damage prevents emergency vehicle passage.",
+                reason=f"{blocked_count} critical road(s) {dmg_type}: {', '.join(blocked_names[:3])}. "
+                       f"Disaster-level road condition prevents emergency vehicle passage.",
                 affected_zone=affected_zone,
                 confidence=88,
                 urgency=UrgencyLevel.HIGH if blocked_count > 3 else UrgencyLevel.MEDIUM,
@@ -64,6 +75,7 @@ class TrafficAgent(BaseAgent):
 
         # Check hospital access
         hospitals = [i for i in infrastructure if i.type.value == "hospital"]
+        hosp_blockages = []
         for hosp in hospitals:
             nearby_blocked = sum(
                 1 for road in roads if road.blocked
@@ -71,17 +83,32 @@ class TrafficAgent(BaseAgent):
                 if ((point[0] - hosp.lat)**2 + (point[1] - hosp.lng)**2)**0.5 < 0.012
             )
             if nearby_blocked > 0:
-                recommendations.append(AgentRecommendation(
-                    agent=self.name,
-                    action=f"Open emergency lane to {hosp.name} — access compromised",
-                    reason=f"{nearby_blocked} access road(s) blocked within 1.2 km of hospital. Ambulances cannot reach facility.",
-                    affected_zone="Hospital Access Zone",
-                    confidence=93,
-                    urgency=UrgencyLevel.CRITICAL,
-                    expected_impact="Emergency lane restoration reduces ambulance wait time by est. 18 minutes per run.",
-                    priority=1,
-                    target=hosp.id,
-                ))
-                self.log(f"🚑 Access to {hosp.name} compromised!")
+                hosp_blockages.append((hosp, nearby_blocked))
+
+        hosp_blockages.sort(key=lambda x: -x[1])
+
+        for hosp, nearby_blocked in hosp_blockages[:2]:
+            dtype = disaster.type.value
+            if dtype == "flood":
+                block_type = "flooded out"
+            elif dtype == "earthquake":
+                block_type = "collapsed"
+            elif dtype == "cyclone":
+                block_type = "debris-blocked"
+            else:
+                block_type = "compromised"
+
+            recommendations.append(AgentRecommendation(
+                agent=self.name,
+                action=f"Open emergency lane to {hosp.name} — access compromised",
+                reason=f"{nearby_blocked} access road(s) {block_type} within 1.2 km of hospital. Ambulances cannot reach facility.",
+                affected_zone="Hospital Access Zone",
+                confidence=93,
+                urgency=UrgencyLevel.CRITICAL,
+                expected_impact="Emergency lane restoration reduces ambulance wait time by est. 18 minutes per run.",
+                priority=1,
+                target=hosp.id,
+            ))
+            self.log(f"🚑 Access to {hosp.name} compromised!")
 
         return recommendations
